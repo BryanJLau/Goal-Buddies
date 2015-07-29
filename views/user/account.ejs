@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Goal Buddies - Edit Account</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.13.1/jquery.validate.min.js"></script>
+    <script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.13.1/additional-methods.min.js"></script>
+    <script src="/js/editAccount.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <% include ../header.ejs %>
+          
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-1"></div>
+                <div class="col-md-4">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">Navigation</div>
+                        <div class="panel-body">
+                            <ul class="nav nav-pills nav-stacked">
+                                <li class="active"><a data-toggle="tab" href="#stats">Statistics</a></li>
+                                <li><a data-toggle="tab" href="#account">Account Details</a></li>
+                                <li><a data-toggle="tab" href="#profile">Profile</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <%- warningLabel %>
+                    <div class="tab-content">
+                        <div id="stats" class="tab-pane fade in active">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">Statistics</div>
+                                <div class="panel-body">
+                                    Placeholder?
+                                </div>
+                            </div>
+                        </div>
+                        <div id="account" class="tab-pane fade">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">Account</div>
+                                <div class="panel-body">
+                                    <form role="form" id="accountForm" action="/user/editAccount" method="POST">
+                                        <div class="form-group has-feedback">
+                                            <label for="password">Change Password: (minimum 6 characters)</label>
+                                            <input id="password" type="password" class="form-control" name="password">
+                                            <span class="glyphicon form-control-feedback" id="passwordg"></span>
+                                        </div>
+                                        <div class="form-group has-feedback">
+                                            <label for="cpassword">Confirm Password:</label>
+                                            <input id="cpassword" type="password" class="form-control" name="cpassword">
+                                            <span class="glyphicon form-control-feedback" id="cpasswordg"></span>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Submit</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="profile" class="tab-pane fade">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">Profile</div>
+                                <div class="panel-body">
+                                    <form role="form" id="profileForm" action="/user/editProfile" method="POST">
+                                        <div class="form-group has-feedback">
+                                            <label for="firstname">First Name:</label>
+                                            <input id="firstname" type="text" class="form-control" name="firstname">
+                                            <span class="glyphicon form-control-feedback" id="firstnameg"></span>
+                                        </div>
+                                        <div class="form-group has-feedback">
+                                            <label for="lastname">Last Name:</label>
+                                            <input id="lastname" type="text" class="form-control" name="lastname">
+                                            <span class="glyphicon form-control-feedback" id="lastnameg"></span>
+                                        </div>
+                                        <div class="form-group has-feedback">
+                                            <label for="city">City:</label>
+                                            <input id="city" type="text" class="form-control" name="city">
+                                            <span class="glyphicon form-control-feedback" id="cityg"></span>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Submit</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-1"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -26,8 +26,13 @@ The following items are subject to change, and are not in any particular order:
 - [ ] Relationship
   - [ ] CRUD
 - [ ] Additional features
+  - [x] RESTful API prototype
   - [ ] Premium features (follow)
   - [ ] Social media integration
+
+Proposed API
+=============
+See [API](API.md)
 
 Warning / Disclaimer
 =============

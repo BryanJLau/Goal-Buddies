@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Goal Buddies - Login</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <script src="http://malsup.github.com/jquery.form.js"></script>
+    <script src="/javascripts/user/login.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <% include ../header.ejs %>
+          
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4"></div>
+                <div class="col-md-4">
+                    <div id="errorMessage" class='alert alert-danger hidden'>
+                        <span class="glyphicon glyphicon-warning-sign"></span>&nbsp;Invalid username/password combination.
+                    </div>
+
+                    <form id="loginForm" role="form" action="/user/login" method="POST">
+                        <div class="form-group">
+                            <label for="usr">Username:</label>
+                            <input type="text" class="form-control" name="username">
+                        </div>
+                        <div class="form-group">
+                            <label for="pwd">Password:</label>
+                            <input type="password" class="form-control" name="password">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Login</button>
+                        <img id="loaderGif" src="/images/ajax-loader.gif" class="hidden"/>
+                    </form>
+                </div>
+                <div class="col-md-4"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

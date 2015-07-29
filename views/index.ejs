@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title><%= title %></title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <% include header.ejs %>
+          
+        <div class="container-fluid">
+            <div class="jumbotron">
+                <h1>Goal Buddies</h1>
+                <h2><small>Achieve more goals, faster, together</small></h2>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-1"></div>
+                <div class="col-md-6">
+                    <div class="well">
+                        <h4>Did you ever lose motivation halfway through a goal?
+                        Never actually completely finish your New Year's Resolution?
+                        We (and your friends) can help you do that!</h4>
+                        <p>Goal Buddies is an application on Android and on the web 
+                        that allows basic goal tracking functionality. However, in 
+                        addition to that, your friends can keep you motivated by 
+                        sending you personalized reminders about your upcoming 
+                        goals, so that you can boast about your heroic achievements
+                        on time!</p>
+                        
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">Global Statistics</div>
+                        <div class="panel-body">
+                            <p>Total Goals: <%= /*totalGoals*/ %></p>
+                            <p>Goals completed: <%= /*goalsCompleted*/ %></p>
+                            <p>Days Saved: <%= /*daysSaved*/ %></p>
+                            <p>Motivations offered: <%= /*timesMotivated*/ %></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-1"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

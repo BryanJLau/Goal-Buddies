@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Goal Buddies - Search</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <% include header.ejs %>
+        <div class="row">
+            <div class="col-md-2"></div>
+            <div class="col-md-8">
+                <div class="panel-group">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h2>User Results</h2></div>
+                        <div class="panel-body">
+                            <% if(username != "") { %>
+                                <div class="list-group">
+                                    <a href="/user/profile/<%= username %>"
+                                        class="list-group-item"><%= username %></a>
+                                </div>
+                            <% } else { %>
+                                No users found!
+                            <% } %>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h2>Your Goal Results</h2></div>
+                        <div class="panel-body">
+                            <% for(var i = 0; i < goals.length; i++) { %>
+                                <%= goals[i]["body"] %><br>
+                            <% } %>
+                            <% if(goals.length == 0) { %>
+                                No goals found!
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            <div class="col-md-2"></div>
+        </div>
+    </div>
+</body>
+</html>
