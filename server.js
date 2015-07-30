@@ -44,6 +44,9 @@ app.use('/', routes);
 var user = require('./routes/user');
 app.use('/user', user);
 
+var goal = require('./routes/goal');
+app.use('/goal', goal);
+
 http.createServer(app).listen(parseInt(app.get('port')), app.get('address'), null, function () {
     console.log('Express server listening on port ' + app.get('port'));
 });

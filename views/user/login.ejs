@@ -19,8 +19,9 @@
             <div class="row">
                 <div class="col-md-4"></div>
                 <div class="col-md-4">
-                    <div id="errorMessage" class='alert alert-danger hidden'>
-                        <span class="glyphicon glyphicon-warning-sign"></span>&nbsp;Invalid username/password combination.
+                    <div id="errorDiv" class='alert alert-danger hidden'>
+                        <span class="glyphicon glyphicon-warning-sign"></span>&nbsp;
+                        <span id="errorMessage"></span>
                     </div>
 
                     <form id="loginForm" role="form" action="/user/login" method="POST">

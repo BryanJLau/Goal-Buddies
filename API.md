@@ -1,5 +1,8 @@
 All requests will return a JSONObject, with the specified properties.
+
 statusCode represents the HTTP status code, and is not part of the JSON.
+A 400 response code will be returned if not all the required fields are
+filled in.
 
 User
 =============
@@ -62,19 +65,34 @@ Goal
 =============
 Get a user's list of goals
 -------------
-``` GET /goal ```
+``` GET /goal/list ```
 
 Parameters:
 
 * ``` token ``` : Your personal access token
-* ``` username ``` : The requested user's username
+* ``` username ``` : (OPTIONAL) The requested user's username
 
 Returns:
 
 * ``` error ``` : An error message in case of incorrect credentials or server errors
 * ``` goals``` : A JSONArray with goals
 
-To get your own goals, use your own access token and username.
+To get your own goals, do not provide a username.
+
+Get a goal
+-------------
+``` GET /goal/view/:id ```
+
+Parameters:
+
+* ``` token ``` : Your personal access token
+
+Returns:
+
+* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
+or Not Found (404) on failure
+* ``` error ``` : An error message in case of incorrect credentials or server errors
+* ``` goal ``` : A JSONObject representing your new goal
 
 Add a goal
 -------------
@@ -85,18 +103,19 @@ Parameters:
 * ``` token ``` : Your personal access token
 * ``` description ``` : Your description of the goal
 * ``` type ``` : The type of goal (recurring: 0, one-time: 1)
+* ``` icon ``` : An integer representing a predefined icon
 * ``` daysToFinish ``` : Projected number of days to completion
-* ``` city ``` : Your current city of residence
 
 Returns:
 
+* ``` statusCode ``` : Created (201) if successful, Unauthorized (401)
+or Not Found (404) on failure
 * ``` error ``` : An error message in case of incorrect credentials or server errors
-* ``` token ``` : A unique token (application specific) required for other functions
-* ``` user ``` : A JSONObject representing your new user details
+* ``` goal ``` : A JSONObject representing your new goal details
 
 Update a goal's description
 -------------
-``` PUT /goal/:id/edit ```
+``` POST /goal/:id/edit ```
 
 Parameters:
 
@@ -105,12 +124,14 @@ Parameters:
 
 Returns:
 
+* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
+or Not Found (404) on failure
 * ``` error ``` : An error message in case of incorrect credentials or server errors
 * ``` goal ``` : A JSONObject representing your new goal
 
 Finish a goal
 -------------
-``` PUT /goal/:id/finish ```
+``` POST /goal/:id/finish ```
 
 Parameters:
 
@@ -118,12 +139,14 @@ Parameters:
 
 Returns:
 
+* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
+or Not Found (404) on failure
 * ``` error ``` : An error message in case of incorrect credentials or server errors
 * ``` goal ``` : A JSONObject representing your new goal
 
 Motivate a goal
 -------------
-``` PUT /goal/:id/motivate ```
+``` POST /goal/:id/motivate ```
 
 Parameters:
 
@@ -131,6 +154,8 @@ Parameters:
 
 Returns:
 
+* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
+or Not Found (404) on failure
 * ``` error ``` : An error message in case of incorrect credentials or server errors
 
 Delete a goal
@@ -143,6 +168,8 @@ Parameters:
 
 Returns:
 
+* ``` statusCode ``` : No Content (204) if successful, Unauthorized (401)
+or Not Found (404) on failure
 * ``` error ``` : An error message in case of incorrect credentials or server errors
 
 

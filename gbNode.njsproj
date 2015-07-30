@@ -68,6 +68,8 @@
     <Content Include="README.md" />
     <Content Include="views\about.ejs" />
     <Content Include="views\error.ejs" />
+    <Content Include="views\goal\list.ejs" />
+    <Content Include="views\goal\new.ejs" />
     <Content Include="views\header.ejs" />
     <Content Include="views\index.ejs" />
     <Content Include="views\search.ejs" />
@@ -80,6 +82,7 @@
     <Folder Include="public\" />
     <Folder Include="public\fonts\" />
     <Folder Include="public\javascripts\" />
+    <Folder Include="public\javascripts\goal\" />
     <Folder Include="public\javascripts\user\" />
     <Folder Include="public\images\" />
     <Folder Include="public\stylesheets\" />
@@ -96,6 +99,9 @@
   <ItemGroup>
     <Content Include="public\javascripts\user\login.js" />
     <Content Include="public\javascripts\user\register.js" />
+    <Content Include="public\javascripts\goal\new.js" />
+    <Content Include="public\javascripts\goal\list.js" />
+    <Compile Include="routes\goal.js" />
     <Compile Include="TokenHashTable.js" />
     <Compile Include="routes\user.js" />
   </ItemGroup>

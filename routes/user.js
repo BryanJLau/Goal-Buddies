@@ -106,32 +106,47 @@ router.post('/login', function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
     
-    var loginCallback = function (token, userObject) {
-        if (userObject) {     // Login was successful
-            console.log("User " + userObject.id + " has logged in.");
-            res.status(HttpStatus.CREATED);
-            res.send(
-                {
-                    error : null,
-                    token : req.session.token = token,
-                    user : req.session.user = userObject
-                }
-            );
-        }
-        else {
-            // This section is called anyway for some unknown reason
-            res.status(HttpStatus.UNAUTHORIZED);
-            res.send(
-                {
-                    error : "401 Unauthorized",
-                    token : null,
-                    user : null
-                }
-            );
-        }
+    if (typeof username== 'undefined' || typeof password == 'undefined' ||
+        username == "" || password == "") {
+        // Some parameters are missing
+        res.status(HttpStatus.BAD_REQUEST);
+        res.send(
+            {
+                error : "Please fill in all required fields.",
+                token : null,
+                user : null
+            }
+        );
+        return;
     }
-    
-    UserModule.findUser(username, password, loginCallback);
+    else {
+        var loginCallback = function (token, userObject) {
+            if (userObject) {     // Login was successful
+                console.log("User " + userObject.id + " has logged in.");
+                res.status(HttpStatus.CREATED);
+                res.send(
+                    {
+                        error : null,
+                        token : req.session.token = token,
+                        user : req.session.user = userObject
+                    }
+                );
+            }
+            else {
+                // This section is called anyway for some unknown reason
+                res.status(HttpStatus.UNAUTHORIZED);
+                res.send(
+                    {
+                        error : "Invalid username/password combination.",
+                        token : null,
+                        user : null
+                    }
+                );
+            }
+        }
+        
+        UserModule.findUser(username, password, loginCallback);
+    }
 });
 
 /*
@@ -157,45 +172,65 @@ router.post('/', function (req, res, next) {
     var lastname = req.body.lastname;
     var city = req.body.city;
     
-    var registerCallback = function (token, userObject) {
-        if (userObject) {     // Login was successful
-            req.session.token = token;
-            req.session.user = userObject;
-
-            res.status(HttpStatus.CREATED);
-            res.send(
-                {
-                    error : null,
-                    token : req.session.token = token,
-                    user : req.session.user = userObject
-                }
-            );
+    if (typeof username == 'undefined' || typeof password == 'undefined' || 
+        typeof firstname == 'undefined' || typeof lastname == 'undefined' || 
+        typeof city == 'undefined' ||
+        username == '' || password == '' || 
+        firstname == '' || lastname == '' || 
+        city == '') {
+        res.status(HttpStatus.BAD_REQUEST);
+        res.send(
+            {
+                error : "Please fill in all required fields.",
+                token : null,
+                user : null
+            }
+        );
+        return;
+    }
+    else {
+        var registerCallback = function (token, userObject) {
+            if (userObject) {     // Login was successful
+                req.session.token = token;
+                req.session.user = userObject;
+                
+                res.status(HttpStatus.CREATED);
+                res.send(
+                    {
+                        error : null,
+                        token : req.session.token = token,
+                        user : req.session.user = userObject
+                    }
+                );
+            }
+            else {
+                res.status(HttpStatus.CONFLICT);
+                res.send(
+                    {
+                        error : "That username has already been taken!",
+                        token : null,
+                        user : null
+                    }
+                );
+            }
         }
-        else {
-            res.status(HttpStatus.CONFLICT);
-            res.send(
-                {
-                    error : "409 Conflict",
-                    token : null,
-                    user : null
-                }
-            );
-        }
+        
+        UserModule.createUser(username, password, registerCallback);
     }
     
-    UserModule.createUser(username, password, registerCallback);
 });
 
 /*
- * Register function
+ * Logout function
  * There are no parameters or return data.
  */
 router.get('/logout', function (req, res, next) {
-    if(req.session.token)
+    if (req.session.token)
         TokenHashTable.deleteToken(req.session.token);
     if (req.session.user)
         console.log("User " + req.session.user.id + " has logged out.");
-
+    
+    // Clear the session variables to update header
     req.session.user = null;
     req.session.token = null;
     res.redirect("/");
@@ -206,21 +241,21 @@ router.get('/logout', function (req, res, next) {
 /* GET users listing. */
 router.get('/', function (req, res, next) {
     if (req.session.user)
-        res.redirect("/goal/list");  // User is already logged in
+        res.redirect("/goal");  // User is already logged in
     else
         res.render('user/login');
 });
 
 router.get('/login', function (req, res, next) {
     if (req.session.user)
-        res.redirect("/goal/list");  // User is already logged in
+        res.redirect("/goal");  // User is already logged in
     else
         res.render('user/login');
 });
 
 router.get('/register', function (req, res, next) {
     if (req.session.user)
-        res.redirect("/goal/list");  // User is already logged in
+        res.redirect("/goal");  // User is already logged in
     else
         res.render('user/register');
 });

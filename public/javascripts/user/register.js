@@ -95,20 +95,18 @@ $(document).ready(function() {
 	var options = {
 	    beforeSubmit: function () {
 	        $('#loaderGif').removeClass('hidden');
-	        $('#errorMessage').addClass('hidden');
+	        $('#errorDiv').addClass('hidden');
 	        return true;
 	    },
 	    complete: function () {
 	        $('#loaderGif').addClass('hidden');
 	    },
 	    statusCode: {
-	        409: function () {
-	            // Conflict
-	            $('#errorMessage').removeClass('hidden');
-	        },
+	        400: displayErrorMessage,
+	        409: displayErrorMessage,
 	        201: function () {
 	            // Created user
-	            window.location.replace("/");
+	            window.location.replace("/goal");
 	        }
 	    }
 	}
@@ -116,6 +114,12 @@ $(document).ready(function() {
     // Bind to the register form for AJAX functionality
 	$('#registerForm').ajaxForm(options);
 });
+
+var displayErrorMessage = function (data, textStatus, jqXHR) {
+    var result = JSON.parse(data.responseText);
+    $('#errorMessage').text(result.error);
+    $('#errorDiv').removeClass('hidden');
+}
 
 // Form handler
 $('#registerForm').submit(function () {

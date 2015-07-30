@@ -6,9 +6,9 @@
             <% if(!(typeof user == "undefined" || user == null)) { %>
                 <li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">Goals <span class="caret"></span></a>
                     <ul class="dropdown-menu">
-                        <li><a href="/goal/add">Add a goal!</a></li>
-                        <li><a href="/goal/list">In progress</a></li>
-                        <li><a href="/goal/completed">Completed</a></li>
+                        <li><a href="/goal">Your goals</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li><a href="/goal/new">Add a goal!</a></li>
                     </ul>
                 </li>
             <% } %>
@@ -32,4 +32,6 @@
         </ul>
         </div>
     </div>
+
+    
 </nav>
