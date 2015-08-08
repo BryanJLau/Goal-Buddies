@@ -79,6 +79,7 @@
     <Content Include="views\user\register.ejs" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="models\" />
     <Folder Include="public\" />
     <Folder Include="public\fonts\" />
     <Folder Include="public\javascripts\" />
@@ -101,7 +102,12 @@
     <Content Include="public\javascripts\user\register.js" />
     <Content Include="public\javascripts\goal\new.js" />
     <Content Include="public\javascripts\goal\list.js" />
+    <Compile Include="config.js" />
+    <Compile Include="models\userModel.js" />
+    <Content Include="public\javascripts\goalbuddies.js" />
+    <Compile Include="routes\apiUser.js" />
     <Compile Include="routes\goal.js" />
+    <Compile Include="routes\commonMiddleware.js" />
     <Compile Include="TokenHashTable.js" />
     <Compile Include="routes\user.js" />
   </ItemGroup>

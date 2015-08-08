@@ -11,9 +11,11 @@
         statusCode: {
             400: displayErrorMessage,
             401: displayErrorMessage,
-            201: function () {
+            200: function (data, textStatus, jqXHR) {
                 // Created (token)
-                window.location.replace("/goal");
+                sessionStorage.setItem("token", data.token);
+                sessionStorage.setItem("username", data.user.username);
+                window.location.replace("/");
             }
         }
     }

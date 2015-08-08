@@ -1,14 +1,42 @@
 All requests will return a JSONObject, with the specified properties.
 
-statusCode represents the HTTP status code, and is not part of the JSON.
-A 400 response code will be returned if not all the required fields are
-filled in.
+An error will contain a JSONObject with:
+
+* ``` statusCode ``` : The appropriate status code of the error
+* ``` devError ``` : An error message describing the error for developers
+* ``` error ``` : An error message to be presented to the end user
+
+Note: statusCode BAD_REQUEST (400) will be returned if some fields are missing.
+
+API Addresses
+=============
+The locations for the API can be found at:
+
+``` http://api.domain.com/ ```
+
+OR
+
+``` http://www.domain.com/api/ ```
+
+Token Usage
+=============
+Tokens are JSON web tokens. As such, they can appear in any of the following 
+three places:
+
+* ``` sessionStorage ``` : When using the Goal Buddies website, the token will be
+stored here.
+* ``` parameter ``` : The entire token can be present in the URL if necessary, 
+eg. ``` http://www.domain.com/api/users?token=<token> ```, substituting <token> 
+for the actual token for GET requests, or an ordinary parameter in POST requests.
+* ``` HTTP header ``` : In the field "x-access-token" with the value being the token.
+
+Tokens have (by default) a 1 day lifespan.
 
 User
 =============
 Get access token
 -------------
-``` POST /user/login ```
+``` POST /users/login ```
 
 Parameters:
 
@@ -18,13 +46,13 @@ Parameters:
 Returns:
 
 * ``` statusCode ``` : Created (201) if successful, Unauthorized (401) on failure
-* ``` error ``` : An error message in case of incorrect credentials or server errors
 * ``` token ``` : A unique token (application specific) required for other functions
-* ``` user ``` : A JSONObject representing your user details
+* ``` user ``` : A JSONObject containing your username and id (more information may 
+be added if necessary)
 
 Register a user
 -------------
-``` POST /user ```
+``` POST /users ```
 
 Parameters:
 
@@ -37,19 +65,17 @@ Parameters:
 Returns:
 
 * ``` statusCode ``` : Created (201) if successful, Conflict (409) on failure
-* ``` error ``` : An error message in case of incorrect credentials or server errors
 * ``` token ``` : A unique token (application specific) required for other functions
-* ``` user ``` : A JSONObject representing your new user details
+* ``` user ``` : A JSONObject containing your username (more information may 
+be added if necessary)
 
-Logout a user
--------------
-``` GET /user/logout ```
-
-There are no parameters or return data. The token is deleted automatically.
+Note: the personal information is only used for visibility purposes, by no means do 
+you have to input real information if you are not comfortable doing so. Friends will 
+be able to search for you through username or (full name + city).
 
 View a user's profile
 -------------
-``` GET /user/:username ```
+``` GET /users/:username ```
 
 Parameters:
 
@@ -65,7 +91,7 @@ Goal
 =============
 Get a user's list of goals
 -------------
-``` GET /goal/list ```
+``` GET /goals/list ```
 
 Parameters:
 
@@ -81,7 +107,7 @@ To get your own goals, do not provide a username.
 
 Get a goal
 -------------
-``` GET /goal/view/:id ```
+``` GET /goals/view/:id ```
 
 Parameters:
 
@@ -96,7 +122,7 @@ or Not Found (404) on failure
 
 Add a goal
 -------------
-``` POST /goal ```
+``` POST /goals ```
 
 Parameters:
 
@@ -115,7 +141,7 @@ or Not Found (404) on failure
 
 Update a goal's description
 -------------
-``` POST /goal/:id/edit ```
+``` POST /goals/:id/edit ```
 
 Parameters:
 
@@ -131,7 +157,7 @@ or Not Found (404) on failure
 
 Finish a goal
 -------------
-``` POST /goal/:id/finish ```
+``` POST /goals/:id/finish ```
 
 Parameters:
 
@@ -146,7 +172,7 @@ or Not Found (404) on failure
 
 Motivate a goal
 -------------
-``` POST /goal/:id/motivate ```
+``` POST /goals/:id/motivate ```
 
 Parameters:
 
@@ -160,7 +186,7 @@ or Not Found (404) on failure
 
 Delete a goal
 -------------
-``` DELETE /goal/:id ```
+``` DELETE /goals/:id ```
 
 Parameters:
 

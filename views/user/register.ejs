@@ -11,6 +11,7 @@
     <script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.13.1/additional-methods.min.js"></script>
     <script src="http://malsup.github.com/jquery.form.js"></script>
     <script src="/javascripts/user/register.js"></script>
+    <script src="/javascripts/goalbuddies.js"></script>
 </head>
 
 <body>
@@ -25,7 +26,7 @@
                         <span id="errorMessage"></span>
                     </div>
 
-                    <form role="form" id="registerForm" action="/user" method="POST">
+                    <form role="form" id="registerForm" action="/api/users" method="POST">
                         <div class="panel panel-default">
                             <div class="panel-heading">Account Details</div>
                             <div class="panel-body">
@@ -51,14 +52,14 @@
                             <div class="panel-heading">User Details</div>
                             <div class="panel-body">
                                 <div class="form-group has-feedback">
-                                    <label for="firstname">First Name:</label>
-                                    <input id="firstname" type="text" class="form-control" name="firstname">
-                                    <span class="glyphicon form-control-feedback" id="firstnameg"></span>
+                                    <label for="firstName">First Name:</label>
+                                    <input id="firstName" type="text" class="form-control" name="firstName">
+                                    <span class="glyphicon form-control-feedback" id="firstNameg"></span>
                                 </div>
                                 <div class="form-group has-feedback">
-                                    <label for="lastname">Last Name:</label>
-                                    <input id="lastname" type="text" class="form-control" name="lastname">
-                                    <span class="glyphicon form-control-feedback" id="lastnameg"></span>
+                                    <label for="lastName">Last Name:</label>
+                                    <input id="lastName" type="text" class="form-control" name="lastName">
+                                    <span class="glyphicon form-control-feedback" id="lastNameg"></span>
                                 </div>
                                 <div class="form-group has-feedback">
                                     <label for="city">City:</label>

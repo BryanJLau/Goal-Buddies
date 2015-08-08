@@ -2,11 +2,11 @@ $(document).ready(function() {
 	// validate signup form on keyup and submit
 	$("#registerForm").validate({
 		rules: {
-			firstname: {
+			firstName: {
 			    required: true,
 			    lettersonly: true
 		    },
-			lastname: {
+			lastName: {
 			    required: true,
 			    lettersonly: true
 		    },
@@ -56,11 +56,11 @@ $(document).ready(function() {
             }
         },
 		messages: {
-			firstname: {
+			firstName: {
 			    required: "Please enter your first name.",
 			    lettersonly: "Please input letters only."
 		    },
-			lastname: {
+			lastName: {
 			    required: "Please enter your last name.",
 			    lettersonly: "Please input letters only."
 		    },
@@ -81,7 +81,7 @@ $(document).ready(function() {
 			cpassword: {
 				required: "Please provide a password.",
 				minlength: "Please enter at least 6 characters.",
-				equalTo: "<Please enter the same password as above.",
+				equalTo: "Please enter the same password as above.",
 				alphanumeric: "Please enter only alphanumeric characters."
 			},
 			agree: "Please accept our policy"
@@ -104,9 +104,13 @@ $(document).ready(function() {
 	    statusCode: {
 	        400: displayErrorMessage,
 	        409: displayErrorMessage,
-	        201: function () {
-	            // Created user
-	            window.location.replace("/goal");
+	        201: function (data, textStatus, jqXHR) {
+	            // Created (token)
+	            console.log("???");
+	            console.log(data);
+	            sessionStorage.setItem("token", data.token);
+	            sessionStorage.setItem("username", data.user.username);
+	            window.location.replace("/");
 	        }
 	    }
 	}

@@ -13,6 +13,39 @@
         src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.2.1/backbone-min.js"></script>
     <script src="/javascripts/goal/list.js"></script>
 
+    <script type="text/template" id="goal_template">
+        <div class="panel panel-default">
+            <div class="panel-heading" role="tab" id="g<%= goalId %>">
+                <h4 class="panel-title">
+                    <a class="collapsed" data-toggle="collapse" 
+                        data-parent="#accordion" href="#<%= goalId %>"
+                        aria-expanded="true" aria-controls="<%= goalId %>">
+                        <%= recurring[i]["body"] %>
+                    </a>
+                                                        
+                </h4>
+            </div>
+            <div id="<%= goalId %>" class="panel-collapse collapse"
+                role="tabpanel" aria-labelledby="<%= goalId %>">
+                <div class="panel-body">
+                    Goal: <%= recurring[i]["body"] %><br>
+                    Created: <%= recurring[i]["created"] %><br>
+                    <% if(recurring[i]["finished"] != null) { %>
+                        Last Finish Date: <%= recurring[i]["finished"] %><br>
+                    <% } %>
+                    Expiration Date: <%= recurring[i]["eta"] %><br>
+                    Times Completed: <%= recurring[i]["times"] %><br>
+                    <% if(type != "Completed") { %>
+                        <form action="/goal/finish" method="POST">
+                            <input type="hidden" name="hash" value="<%= hash %>">
+                            <button type="submit" class="btn btn-success btn-sm ">Finish!</button>
+                        </form>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </script>
+
     <script>
         var token = "<%= token %>";
     </script>
@@ -26,7 +59,7 @@
             <div class="row">
                 <div class="col-md-1"></div>
                 <div class="col-md-10">
-
+                    <div id="goalContainer"></div>
                 </div>
                 <div class="col-md-1"></div>
             </div>

@@ -5,8 +5,13 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var expressSession = require('express-session');
+var subdomain = require('express-subdomain');
+var mongoose = require('mongoose');
 var app = express();
+var config = require('./config');
+
+// Connect to MongoDB
+mongoose.connect(config.mongoAddr);
 
 // all environments
 app.set('port', process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 8080);
@@ -26,26 +31,26 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(expressSession({
-    secret: 'WhyDoesntGregHelpWithThis',
-    resave: false,
-    saveUninitialized: true
-}));
 
 // development only
 if ('development' == app.get('env')) {
     //app.use(express.errorHandler());
 }
 
-// primary routing
+// API routing ("api.domain.com" or "domain.com/api")
+var api = require('./routes/api');
+app.use(subdomain('api', api));
+app.use('/api', api);
+
+// View routing
 var routes = require('./routes/index');
 app.use('/', routes);
 
 var user = require('./routes/user');
-app.use('/user', user);
+app.use('/users', user);
 
 var goal = require('./routes/goal');
-app.use('/goal', goal);
+app.use('/goals', goal);
 
 http.createServer(app).listen(parseInt(app.get('port')), app.get('address'), null, function () {
     console.log('Express server listening on port ' + app.get('port'));

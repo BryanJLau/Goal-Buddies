@@ -11,7 +11,7 @@ Timeline
 The following items are subject to change, and are not in any particular order:
 
 - [x] Setup to run on [OpenShift](http://node-goalbuddies.rhcloud.com/)
-- [ ] Schema development
+- [x] Schema development
 - [ ] Goal object
   - [ ] CRUD
   - [ ] List with filter/search

@@ -57,7 +57,6 @@ var dummyGoalData = {
 router.post('/list/', function (req, res, next) {
     var token = req.body.token || req.session.token;
     var username = req.body.username;
-    console.log("username" + username);
     
     var userId = TokenHashTable.getId(token);
     if (userId == -1) {

@@ -9,6 +9,7 @@
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
     <script src="http://malsup.github.com/jquery.form.js"></script>
     <script src="/javascripts/user/login.js"></script>
+    <script src="/javascripts/goalbuddies.js"></script>
 </head>
 
 <body>
@@ -24,7 +25,7 @@
                         <span id="errorMessage"></span>
                     </div>
 
-                    <form id="loginForm" role="form" action="/user/login" method="POST">
+                    <form id="loginForm" role="form" action="/api/users/login" method="POST">
                         <div class="form-group">
                             <label for="usr">Username:</label>
                             <input type="text" class="form-control" name="username">
