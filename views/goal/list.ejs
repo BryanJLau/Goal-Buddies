@@ -1,57 +1,92 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="goalListApp">
 <head>
     <title>Goal Buddies - Goals</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.7.3/css/bootstrap-select.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-    <script
-        src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
-    <script type="text/javascript"
-        src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.2.1/backbone-min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.7.3/js/bootstrap-select.min.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+    <script src="http://malsup.github.com/jquery.form.js"></script>
     <script src="/javascripts/goal/list.js"></script>
+    <script src="/javascripts/goalbuddies.js"></script>
 
-    <script type="text/template" id="goal_template">
-        <div class="panel panel-default">
-            <div class="panel-heading" role="tab" id="g<%= goalId %>">
-                <h4 class="panel-title">
-                    <a class="collapsed" data-toggle="collapse" 
-                        data-parent="#accordion" href="#<%= goalId %>"
-                        aria-expanded="true" aria-controls="<%= goalId %>">
-                        <%= recurring[i]["body"] %>
-                    </a>
-                                                        
-                </h4>
-            </div>
-            <div id="<%= goalId %>" class="panel-collapse collapse"
-                role="tabpanel" aria-labelledby="<%= goalId %>">
-                <div class="panel-body">
-                    Goal: <%= recurring[i]["body"] %><br>
-                    Created: <%= recurring[i]["created"] %><br>
-                    <% if(recurring[i]["finished"] != null) { %>
-                        Last Finish Date: <%= recurring[i]["finished"] %><br>
-                    <% } %>
-                    Expiration Date: <%= recurring[i]["eta"] %><br>
-                    Times Completed: <%= recurring[i]["times"] %><br>
-                    <% if(type != "Completed") { %>
-                        <form action="/goal/finish" method="POST">
-                            <input type="hidden" name="hash" value="<%= hash %>">
-                            <button type="submit" class="btn btn-success btn-sm ">Finish!</button>
-                        </form>
-                    <% } %>
+    <!-- For finish button to be vertically centered -->
+	<style>
+		.panel-heading {
+			overflow: hidden;
+		}
+	</style>
+</head>
+
+<!-- Body has the controller because of the modal -->
+<body ng-controller="GoalListCtrl" data-ng-init="init()">
+    <!-- Modal for adding goals -->
+    <div id="addGoalModal" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Add Goal</h4>
+                </div>
+                <div class="modal-body">
+                    <div id="errorDiv" class='alert alert-danger hidden'>
+                        <span class="glyphicon glyphicon-warning-sign"></span>&nbsp;
+                        <span id="errorMessage"></span>
+                    </div>
+
+                    <form id="addGoalForm" name="addGoalForm" role="form" action="/api/goals/" method="POST">
+                        <div class="form-group has-feedback">
+                            <label for="body">Goal:</label>
+                            <textarea class="form-control" rows="5" name="description" id="description"
+                                placeholder="Eg. Lose 10 pounds" ng-model="addForm.description"></textarea>
+                            <span class="glyphicon form-control-feedback" id="descriptiong"></span>
+                        </div>
+                        <div class="form-group has-feedback">
+                            <label for="type">Goal Type:</label>
+                            <select class="form-control" id="type" name="type" ng-model="addForm.type">
+                                <option value="0">Recurring</option>
+                                <option value="1">One-Time</option>
+                            </select>
+                        </div>
+                        <div class="form-group has-feedback">
+                            <label for="eta">How many days from now do you expect to finish?</label>
+                            <input id="eta" type="text" class="form-control" name="eta"
+                                type="number" ng-model="addForm.daysToFinish">
+                            <span class="glyphicon form-control-feedback" id="etag"></span>
+                        </div>
+                        <div class="form-group has-feedback">
+                            <label for="icon">Icon (For your reference only)</label>
+                            <!-- Cannot data-bind using ngModel, creates this bug where
+                                there is a blank entry as the first, and all the values
+                                are shifted down one (last entry is unselectable -->
+                            <select id="addGoalIconSelect" class="selectpicker">
+                                <option data-icon="glyphicon-star" value="star" selected="selected">Default</option>
+                                <option data-icon="glyphicon-book" value="book">Book</option>
+                                <option data-icon="glyphicon-cutlery" value="cutlery">Food</option>
+                                <option data-icon="glyphicon-home" value="home">Household</option>
+                                <option data-icon="glyphicon-usd" value="usd">Monetary</option>
+                                <option data-icon="glyphicon-user" value="user">Personal</option>
+                                <option data-icon="glyphicon-education" value="education">School</option>
+                                <option data-icon="glyphicon-shopping-cart" value="shopping-cart">Shopping</option>
+                                <option data-icon="glyphicon-globe" value="globe">Travel</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <img id="loaderGif" src="/images/ajax-loader.gif" class="hidden"/>
+                    <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="cancelAdd()">Cancel</button>
+                    <button type="button" class="btn btn-primary" ng-click="addGoal()">Add goal!</button>
                 </div>
             </div>
         </div>
-    </script>
+    </div>
 
-    <script>
-        var token = "<%= token %>";
-    </script>
-</head>
 
-<body>
     <div class="container">
         <% include ../header.ejs %>
           
@@ -59,7 +94,65 @@
             <div class="row">
                 <div class="col-md-1"></div>
                 <div class="col-md-10">
-                    <div id="goalContainer"></div>
+					<div class="col-md-3">
+                        <button class="btn btn-success btn-block" ng-click="showAddGoalModal()">
+                            <span class="glyphicon glyphicon-plus"></span> Add a goal!
+                        </button>
+						<nav class="navbar navbar-default" role="navigation">
+							<ul class="nav nav-pills nav-stacked">
+								<li class="active">
+                                    <a href="#" role="button" ng-click="setRecurring()">
+                                        <span class="glyphicon glyphicon-repeat"></span> Recurring
+                                    </a>
+								</li>
+								<li>
+                                    <a href="#" role="button" ng-click="setOneTime()">
+                                        <span class="glyphicon glyphicon-time"></span> One-Time
+                                    </a>
+								</li>
+								<li><a href="#" role="button"><span class="glyphicon glyphicon-cloud"></span> Link</a></li>
+							</ul>
+						</nav>
+					</div>
+
+					<div class="col-md-9">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+						        <h4>{{ goalTypeString }} Goals</h4>
+                            </div>
+                            <div class="panel-body">
+						        <div ng-repeat="goal in goals">
+							        <div class="panel panel-default"
+                                        ng-class="{ 'panel-danger' : !goal.unread && (goal.etaMs < now), 'panel-warning' : goal.unread }">
+								        <div class="panel-heading" role="tab" id="h{{ goal._id }}">
+									        <div class="panel-title">
+										        <a class="collapsed" data-toggle="collapse"
+											        data-parent="#accordion" href="#{{ goal._id }}"
+											        aria-expanded="true" aria-controls="{{ goal._id }}">
+											        {{ goal.description }}
+										        </a>
+										        <button class="btn btn-success btn-xs pull-right"
+											        ng-if="goal.pending == true">Finish</button>
+									        </div>
+								        </div>
+								        <div id="{{ goal._id }}" class="panel-collapse collapse"
+									         role="tabpanel" aria-labelledby={{ goal._id }}>
+									        <div class="panel-body">
+										        Goal: {{ goal.description }}<br>
+										        Created: {{ goal.created }}<br>
+										        <div ng-if="goal.finished != null">
+											        Last Finish Date: {{ goal.finished }}<br>
+										        </div>
+										        Expiration Date: {{ goal.eta }}<br>
+										        Times Completed: {{ goal.times }}<br>
+									        </div>
+								        </div>
+							        </div>
+						        </div>
+                            </div>
+                        </div>
+					</div>
+
                 </div>
                 <div class="col-md-1"></div>
             </div>

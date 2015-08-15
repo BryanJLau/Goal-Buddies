@@ -5,6 +5,9 @@ var router = express.Router();
 var user = require('./apiUser');
 router.use('/users', user);
 
+var goals = require('./apiGoal');
+router.use('/goals', goals);
+
 // The common access point for further API routing
 
 function apiNotFound(req, res, next) {

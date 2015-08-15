@@ -9,6 +9,7 @@ var subdomain = require('express-subdomain');
 var mongoose = require('mongoose');
 var app = express();
 var config = require('./config');
+var middle = require('./routes/commonMiddleware');
 
 // Connect to MongoDB
 mongoose.connect(config.mongoAddr);
@@ -36,6 +37,9 @@ app.use(cookieParser());
 if ('development' == app.get('env')) {
     //app.use(express.errorHandler());
 }
+
+// Sanitize the body for noSql attacks
+app.all('*', middle.cleanBody);
 
 // API routing ("api.domain.com" or "domain.com/api")
 var api = require('./routes/api');

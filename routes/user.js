@@ -6,28 +6,6 @@ var middle = require('./commonMiddleware');
 
 var User = require('../models/userModel');
 
-var TokenHashTable = require('../TokenHashTable.js');
-
-var dummyUserData = {
-    "users" : [
-        {
-            id : 0,
-            username : "user1",
-            password : "pwd123"
-        },
-        {
-            id : 1,
-            username : "user2",
-            password : "pwd1234"
-        },
-        {
-            id : 2,
-            username : "user11",
-            password : "pwd1234"
-        }
-    ]
-}
-
 // This module is just a proof of concept, should just be its own module with exports
 var UserModule = (function () {
     // Private
@@ -103,23 +81,23 @@ var UserModule = (function () {
 /* GET users listing. */
 router.get('/', middle.checkToken, function (req, res, next) {
     if (req.user)
-        res.redirect("/goal");  // User is already logged in
+        return res.redirect("/goals");  // User is already logged in
     else
-        res.render('user/login');
+        return res.render('user/login');
 });
 
 router.get('/login', middle.checkToken, function (req, res, next) {
     if (req.user)
-        res.redirect("/goal");  // User is already logged in
+        return res.redirect("/goals");  // User is already logged in
     else
-        res.render('user/login');
+        return res.render('user/login');
 });
 
 router.get('/register', middle.checkToken, function (req, res, next) {
     if (req.user)
-        res.redirect("/goal");  // User is already logged in
+        return res.redirect("/goals");  // User is already logged in
     else
-        res.render('user/register');
+        return res.render('user/register');
 });
 
 module.exports = router;

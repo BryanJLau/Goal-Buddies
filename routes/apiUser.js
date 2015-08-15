@@ -3,18 +3,12 @@ var router = express.Router();
 var url = require('url');
 var HttpStatus = require('http-status-codes');
 var bcrypt = require('bcrypt-nodejs');
-var sanitize = require('mongo-sanitize');
 var config = require('../config');
 var jwt = require('jsonwebtoken');
 var middle = require('./commonMiddleware');
 
-// Middleware to sanitize against nosql attacks
-function cleanBody(req, res, next) {
-    req.body = sanitize(req.body);
-    next();
-}
-
 var UserModel = require('../models/userModel');
+var GoalModel = require('../models/goalModel');
 
 /*
  * Login function
@@ -27,7 +21,7 @@ var UserModel = require('../models/userModel');
  *              other functions
  *      user : A JSONObject representing your user details
  */
-router.post('/login', cleanBody, function (req, res, next) {
+router.post('/login', middle.cleanBody, function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
     
@@ -35,7 +29,7 @@ router.post('/login', cleanBody, function (req, res, next) {
         username == "" || password == "") {
         // Some parameters are missing
         res.status(HttpStatus.BAD_REQUEST);
-        res.json(
+        return res.json(
             {
                 statusCode : HttpStatus.BAD_REQUEST,
                 devError : "Not all required fields were sent to the server. " +
@@ -50,7 +44,7 @@ router.post('/login', cleanBody, function (req, res, next) {
             if (err || !user || !bcrypt.compareSync(password, user.password)) {
                 // Invalid credentials
                 res.status(HttpStatus.UNAUTHORIZED);
-                res.json(
+                return res.json(
                     {
                         statusCode : HttpStatus.UNAUTHORIZED,
                         devError : "An invalid username/password combination " +
@@ -66,7 +60,7 @@ router.post('/login', cleanBody, function (req, res, next) {
                     username : username
                 };
                 res.status(HttpStatus.OK);
-                res.json(
+                return res.json(
                     {
                         token : jwt.sign(
                             trimmedUser,
@@ -75,7 +69,8 @@ router.post('/login', cleanBody, function (req, res, next) {
                         ),
                         // This is used in any apps that need to save the credentials
                         // such as the Android app
-                        user : trimmedUser
+                        user : trimmedUser,
+                        expires : new Date().getTime() + 24 * 3600000   // Send expiration time as well
                     }
                 );
             }
@@ -97,7 +92,7 @@ router.post('/login', cleanBody, function (req, res, next) {
  *              other functions
  *      user : A JSONObject representing your user details
  */
-router.post('/', cleanBody, function (req, res, next) {
+router.post('/', middle.cleanBody, function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
     var firstName = req.body.firstName;
@@ -114,7 +109,7 @@ router.post('/', cleanBody, function (req, res, next) {
         // Not all fields were entered
         console.log("Attempted registration, missing fields.");
         res.status(HttpStatus.BAD_REQUEST);
-        res.json(
+        return res.json(
             {
                 statusCode : HttpStatus.BAD_REQUEST,
                 devError : "Not all required fields were sent to the server. " +
@@ -132,6 +127,11 @@ router.post('/', cleanBody, function (req, res, next) {
         newUser.lastName = lastName;
         newUser.city = city;
         
+        var newGoal = new GoalModel();
+        newGoal.description = "Create a goal and get at it using Goal Buddies!";
+        newGoal.type = 1;
+        newUser.goals.push(newGoal);
+
         newUser.save(function (err) {
             if (err) {
                 if (err.code == "11000") {
@@ -139,7 +139,7 @@ router.post('/', cleanBody, function (req, res, next) {
 
                     // Duplicate key
                     res.status(HttpStatus.CONFLICT);
-                    res.json(
+                    return res.json(
                         {
                             statusCode : HttpStatus.CONFLICT,
                             devError : "Username conflict with requested username.",
@@ -151,7 +151,7 @@ router.post('/', cleanBody, function (req, res, next) {
                     // In case the above field existence checking isn't enough
                     console.log("Attempted registration, missing fields.");
                     res.status(HttpStatus.BAD_REQUEST);
-                    res.json(
+                    return res.json(
                         {
                             statusCode : HttpStatus.BAD_REQUEST,
                             devError : "Not all required fields were sent to the server. " +
@@ -171,14 +171,15 @@ router.post('/', cleanBody, function (req, res, next) {
                 // Success
                 console.log("Successfully registered user: " + username + ".");
                 res.status(HttpStatus.CREATED);
-                res.json(
+                return res.json(
                     {
                         token : jwt.sign(
                             trimmedUser,
                             config.tokenSecret,
                             { expiresInMinutes: 1440 }  // expires in 24 hours
                         ),
-                        user : trimmedUser
+                        user : trimmedUser,
+                        expires : new Date().getTime() + 24 * 3600000   // Send expiration time as well
                     }
                 );
             }

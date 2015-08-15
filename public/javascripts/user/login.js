@@ -15,7 +15,8 @@
                 // Created (token)
                 sessionStorage.setItem("token", data.token);
                 sessionStorage.setItem("username", data.user.username);
-                window.location.replace("/");
+                sessionStorage.setItem("tokenExpiry", data.expires);
+                window.location.replace("/goals");
             }
         }
     }

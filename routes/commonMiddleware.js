@@ -1,5 +1,7 @@
 ﻿var jwt = require('jsonwebtoken');
+var sanitize = require('mongo-sanitize');
 var config = require('../config');
+var HttpStatus = require('http-status-codes');
 
 // Middleware to sanitize against nosql attacks
 exports.cleanBody = function (req, res, next) {
@@ -19,7 +21,7 @@ exports.verifyToken = function (req, res, next) {
         jwt.verify(token, config.tokenSecret, function (err, decoded) {
             if (err) {
                 res.status(HttpStatus.UNAUTHORIZED);
-                res.json(
+                return res.json(
                     {
                         statusCode : HttpStatus.UNAUTHORIZED,
                         devError : "An invalid token was passed. Please make sure " +
@@ -29,16 +31,17 @@ exports.verifyToken = function (req, res, next) {
                     }
                 );
             } else {
-                if (decoded.exp <= Date.now()) {
-                    res.end('Access token has expired', 400);
+                if ((decoded.exp * 1000) <= Date.now()) {   // The expiration time is in seconds
                     res.status(HttpStatus.UNAUTHORIZED);
-                    res.json(
+                    return res.json(
                         {
                             statusCode : HttpStatus.UNAUTHORIZED,
                             devError : "The token has expired. Please redirect the user " +
                             "to the login screen, or attempt another authentication on " +
                             "their behalf.",
                             error : "Your access token has expired. Please login again.",
+                            te : decoded.exp,
+                            now : Date.now()
                         }
                     );
                 }
@@ -52,7 +55,7 @@ exports.verifyToken = function (req, res, next) {
 
     } else {
         res.status(HttpStatus.UNAUTHORIZED);
-        res.json(
+        return res.json(
             {
                 statusCode : HttpStatus.UNAUTHORIZED,
                 devError : "No token was passed. Please submit a token with " +

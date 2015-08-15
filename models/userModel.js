@@ -1,7 +1,8 @@
 ﻿var mongoose = require('mongoose');
-var bcrypt = require('bcrypt-nodejs');
+var GoalModel = require('./goalModel');
+//var bcrypt = require('bcrypt-nodejs');
 
-var salt = "SomeoneBlameGregForNotHelping";
+var d = new Date();
 
 // Define our user schema
 var UserSchema = new mongoose.Schema( {
@@ -45,7 +46,7 @@ var UserSchema = new mongoose.Schema( {
     // The following fields are automatically generated
     dateCreated: {
         type: Date,
-        default: Date.now
+        default: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime(),
     },
     premium: {
         type: Boolean,
@@ -65,21 +66,7 @@ var UserSchema = new mongoose.Schema( {
     },
     
     // Embed goals into the user document
-    goals: [
-        {
-            // Goal schema
-            // For the identifier, use built-in _id
-            description: String,
-            type: Number,
-            pending: Boolean,
-            unread: Boolean,
-            created: Date,
-            eta: Date,
-            finished: Date,
-            times: Number,
-            version: Number
-        }
-    ],
+    goals: [ GoalModel.schema ],
     version: {
         type: Number,
         default: 0
@@ -90,12 +77,14 @@ var UserSchema = new mongoose.Schema( {
 UserSchema.index({ username: 1 });
 
 // Compare passwords
+/*
 UserSchema.methods.verifyPassword = function (password, cb) {
     bcrypt.compare(password, this.password, function (err, isMatch) {
         if (err) return cb(err);
         cb(null, isMatch);
     });
 };
+ * */
 
 // Export the Mongoose model
 module.exports = mongoose.model('User', UserSchema);

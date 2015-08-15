@@ -30,6 +30,12 @@ eg. ``` http://www.domain.com/api/users?token=<token> ```, substituting <token>
 for the actual token for GET requests, or an ordinary parameter in POST requests.
 * ``` HTTP header ``` : In the field "x-access-token" with the value being the token.
 
+Tokens have the format:
+
+* ``` token ``` : The actual text of the token
+* ``` username ``` : Your username
+* ``` expires ``` : Datetime (in ms) of when your token expires
+
 Tokens have (by default) a 1 day lifespan.
 
 User
@@ -97,28 +103,34 @@ Parameters:
 
 * ``` token ``` : Your personal access token
 * ``` username ``` : (OPTIONAL) The requested user's username
+* ``` version ``` : Get all goals with version > this parameter
+* ``` offset ``` : Output goals starting at offset (default: 0)
+* ``` limit ``` : Return up to this many goals (default: 10)
+* ``` type ``` : The type of goals (recurring: 0, one-time: 1, default: 0)
+* ``` finished ``` : True to return finished goals (default: false)
 
 Returns:
 
 * ``` error ``` : An error message in case of incorrect credentials or server errors
-* ``` goals``` : A JSONArray with goals
+* ``` goals ``` : A JSONArray with goals
+* ``` totalGoals ``` : The total number of goals the user has (for pagination)
 
 To get your own goals, do not provide a username.
 
 Get a goal
 -------------
-``` GET /goals/view/:id ```
+``` POST /goals/list/:username ```
 
 Parameters:
 
 * ``` token ``` : Your personal access token
+* ``` username ``` : The desired person's username (if yourself, leave blank)
 
 Returns:
 
 * ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
 or Not Found (404) on failure
-* ``` error ``` : An error message in case of incorrect credentials or server errors
-* ``` goal ``` : A JSONObject representing your new goal
+* ``` goals ``` : An array (NOT AN OBJECT) 
 
 Add a goal
 -------------
@@ -129,7 +141,7 @@ Parameters:
 * ``` token ``` : Your personal access token
 * ``` description ``` : Your description of the goal
 * ``` type ``` : The type of goal (recurring: 0, one-time: 1)
-* ``` icon ``` : An integer representing a predefined icon
+* ``` icon ``` : A string corresponding to a glyphicon
 * ``` daysToFinish ``` : Projected number of days to completion
 
 Returns:

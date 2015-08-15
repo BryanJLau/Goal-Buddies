@@ -106,11 +106,10 @@ $(document).ready(function() {
 	        409: displayErrorMessage,
 	        201: function (data, textStatus, jqXHR) {
 	            // Created (token)
-	            console.log("???");
-	            console.log(data);
 	            sessionStorage.setItem("token", data.token);
 	            sessionStorage.setItem("username", data.user.username);
-	            window.location.replace("/");
+	            sessionStorage.setItem("tokenExpiry", data.expires);
+	            window.location.replace("/goals");
 	        }
 	    }
 	}

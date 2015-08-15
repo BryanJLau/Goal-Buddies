@@ -2,7 +2,8 @@
 exports.tokenSecret = "Greg's secret is not helping me. ):";
 
 // default to a 'localhost' configuration:
-var connection_string = '127.0.0.1:27017/v2';
+var connection_string = 'mongodb://goalbuddies:pwd123@ds038888.mongolab.com:38888/goalbuddies'
+    || '127.0.0.1:27017/v2';
 // if OPENSHIFT env variables are present, use the available connection info:
 if (process.env.OPENSHIFT_MONGODB_DB_PASSWORD) {
     connection_string =

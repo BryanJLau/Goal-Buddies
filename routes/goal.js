@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var url = require('url');
 var HttpStatus = require('http-status-codes');
+var middle = require('./commonMiddleware');
 
 var TokenHashTable = require('../TokenHashTable.js');
 
@@ -50,13 +51,12 @@ var dummyGoalData = {
  * Returns:
  *      statusCode : Created (201) if successful, Unauthorized (401) or
  *                   Bad Request (400) on failure
- *      error : An error message in case of incorrect parameters
- *              or server errors
  *      goalList : A JSONArray with goals
  */
 router.post('/list/', function (req, res, next) {
     var token = req.body.token || req.session.token;
     var username = req.body.username;
+    var version = req.body.version;
     
     var userId = TokenHashTable.getId(token);
     if (userId == -1) {
@@ -557,9 +557,9 @@ router.delete('/:id', function (req, res, next) {
 
 router.get('/new', function (req, res, next) {
     if (!req.session.user)
-        res.redirect("/user/login");
+        return res.redirect("/user/login");
     else
-        res.render('goal/new', {
+        return res.render('goal/new', {
             token: req.session.token,
             user: req.session.user
         });
@@ -567,13 +567,7 @@ router.get('/new', function (req, res, next) {
 
 /* GET goal listing. */
 router.get('/', function(req, res, next) {
-    if (!req.session.user)
-        res.redirect("/user/login");
-    else
-        res.render('goal/list', {
-            token: req.session.token,
-            user: req.session.user
-        });
+    return res.render('goal/list');
 });
 
 module.exports = router;

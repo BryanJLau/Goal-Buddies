@@ -1,121 +1,136 @@
-﻿/*var Goal = Backbone.Model.extend({
-    defaults: {
-        id: -1,
-        userId: -1,
-        description: "",
-        type: -1,
-        icon: -1,
-        eta: -1,
-        timesFinished: -1,
-        timesMotivated: -1
-    },
-    idAttribute: "id",
-    initialize: function () {
-        this.on("invalid", function (model, error) {
-            console.log("Problem initializing goal " + this.idAttribute +
-                ": " + error);
-        });
+﻿$(document).ready(function () {
+    $(".nav-pills li").click(function () {
+        $(".active").removeClass("active");
+        $(this).addClass("active");
+    });
 
-        // Lets hook up some event handers to listen to model change
-        this.on('change:timesFinished', function () {
-            console.log('Message from specific listener: BookName has been changed');
-        });
-    },
-    constructor: function (attributes, options) {
-        Backbone.Model.apply(this, arguments);
-    },
-    validate: function (attr) {
-        // All fields should be populated with nonempty and nonnegatve values
-        if (!attr.id || attr.id < 0) {
-            return "Invalid id.";
-        }
-        else if (!attr.userId || attr.userId < 0) {
-            return "Invalid userId.";
-        }
-        else if (!attr.description || attr.description == "") {
-            return "Invalid description.";
-        }
-        else if (!attr.type || attr.type < 0) {
-            return "Invalid type.";
-        }
-        else if (!attr.icon || attr.icon < 0) {
-            return "Invalid icon.";
-        }
-        else if (!attr.eta || attr.eta < 0) {
-            return "Invalid eta.";
-        }
-        else if (!attr.timesFinished || attr.timesFinished < 0) {
-            return "Invalid timesFinished.";
-        }
-        else if (!attr.timesMotivated || attr.timesMotivated < 0) {
-            return "Invalid timesMotivated.";
-        }
-    },
-    urlRoot: '/goal/view',
-
-    // Custom functions for goals
-    finish: function () {
-        this.set("timesFinished", this.get("timesFinished") + 1);
-    },
-    motivate: function () {
-        this.set("timesMotivated", this.get("timesMotivated") + 1);
-    },
-    edit: function (newDescription) {
-        this.set("description", newDescription + 1);
-    },
-
-    syncFinish: function (opts) {
-        var options = {
-            url: '/goal/' + this.get("id") + '/finish',
-            type: 'POST',
-            data: { 'token': token }
-        };
-
-        // add any additional options, e.g. a "success" callback or data
-        _.extend(options, opts);
-
-        return (this.sync || Backbone.sync).call(this, null, this, options);
-    }
-});
-
-// For some reason, collections don't have .add()? 
-var GoalCollection = [];
-
-$(document).ready(function () {
-    $.ajax({
-        type: 'POST',
-        url: '/goal/list/',
-        data: { token: token },
-        success: function (data) {
-            for (var i = 0; i < data.goalList.length; i++) {
-                GoalCollection.push(new Goal(data.goalList[i]));
-                var goalId = data.goalList[i].id;
-                var description = data.goalList[i].description;
+    var options = {
+        beforeSubmit: function () {
+            $('#loaderGif').removeClass('hidden');
+            $('#errorDiv').addClass('hidden');
+            return true;
+        },
+        complete: function () {
+            $('#loaderGif').addClass('hidden');
+        },
+        statusCode: {
+            400: displayErrorMessage,
+            401: displayErrorMessage,
+            200: function (data, textStatus, jqXHR) {
+                // Created (token)
+                sessionStorage.setItem("token", data.token);
+                sessionStorage.setItem("username", data.user.username);
+                sessionStorage.setItem("tokenExpiry", data.expires);
+                window.location.replace("/");
             }
         }
-    });
-});
-*/
-
-var GoalView = Backbone.View.extend({
-    initialize: function(){
-        this.render();
-    },
-    render: function(){
-        //Pass variables in using Underscore.js Template
-        var variables = { search_label: "My Search" };
-        // Compile the template using underscore
-        var template = _.template( $("#search_template").html(), variables );
-        // Load the compiled HTML into the Backbone "el"
-        this.$el.html( template );
-    },
-    events: {
-        "click input[type=button]": "doSearch"  
-    },
-    doSearch: function( event ){
-        // Button clicked, you can access the element that was clicked with event.currentTarget
-        alert( "Search for " + $("#search_input").val() );
     }
+
+    // Bind to the login form for AJAX functionality
+    $('#loginForm').ajaxForm(options);
 });
 
-var search_view = new SearchView({ el: $("#search_container") });
+var displayErrorMessage = function (data, textStatus, jqXHR) {
+    var result = JSON.parse(data.responseText);
+    $('#errorMessage').text(result.error);
+    $('#errorDiv').removeClass('hidden');
+}
+
+// Form handler
+$('#loginForm').submit(function () {
+    $(this).ajaxSubmit();
+
+    // Prevent browser navigation
+    return false;
+});
+
+var goalListApp = angular.module('goalListApp', []);
+
+goalListApp.controller('GoalListCtrl', function ($scope, $http) {
+    $scope.goals = [];
+    $scope.version = 0;     // Start by getting all goals
+    $scope.now = new Date().getTime();
+    $scope.goalTypeString = "Recurring";
+    $scope.goalType = 0; // Recurring : 0, One-Time : 1
+    $scope.totalGoals = 0;
+    $scope.finished = false;
+
+    $scope.init = function () {
+        $scope.addForm = {};
+        $scope.updateList();
+    }
+
+    // Set the token in the http request
+    var httpConfig = {
+        headers: {
+            'Content-type': 'application/json',
+            'x-access-token': sessionStorage.getItem("token")
+        }
+    };
+    
+    $scope.setRecurring = function () {
+        $scope.goalTypeString = "Recurring";
+        $scope.goalType = 0;
+        $scope.finished = false;
+    };
+
+    $scope.setOneTime = function () {
+        $scope.goalTypeString = "One-Time";
+        $scope.goalType = 1;
+        $scope.finished = false;
+    };
+
+    $scope.showAddGoalModal = function () {
+        $("#addGoalModal").modal('show');
+    };
+
+    $scope.updateList = function () {
+        if (sessionStorage.getItem("token")) {
+            $http.get('/api/goals/list', httpConfig)
+            .success(function (response) {
+                $scope.goals = response.goals;
+                $scope.totalGoals = response.totalGoals;
+                for (var i = 0; i < $scope.goals.length; i++) {
+                    $scope.goals[i].etaMs = new Date($scope.goals[i].eta).getTime();
+                }
+            }).error(function (error) {
+                alert("Something went wrong, try refreshing the page.");
+            });
+        }
+    };
+
+    $scope.addGoal = function () {
+        $('#loaderGif').removeClass('hidden');
+        $('#errorDiv').addClass('hidden');
+
+        var addData = {
+            token: sessionStorage.getItem("token"),
+            description: $scope.addForm.description,
+            icon: $("#addGoalIconSelect").val(),
+            daysToFinish: $scope.addForm.daysToFinish,
+            type: $scope.addForm.type
+        };
+        console.log(addData);
+
+        $http.post('/api/goals', addData)
+        .then(function (response) {
+            // Return everything to normal
+            $('#loaderGif').addClass('hidden');
+            console.log(response);
+            $('#addGoalModal').modal('hide');
+            $scope.updateList();
+
+            $scope.addGoalForm.$setPristine();
+
+            // Reset the form
+            $scope.addForm.description = "";
+            $scope.addForm.daysToFinish = "";
+            $('.selectpicker').selectpicker('val', 'star');
+            $scope.addForm.type = 0;
+        }, function (error) {
+            $('#loaderGif').addClass('hidden');
+            $('#errorMessage').text(error.data.error);
+            $('#errorDiv').removeClass('hidden');
+        });
+    };
+});

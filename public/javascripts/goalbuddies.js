@@ -1,5 +1,20 @@
 ﻿// To populate the header
 $(document).ready(function () {
+    if (sessionStorage.getItem("tokenExpiry") !== null) {
+        if(sessionStorage.getItem("tokenExpiry") < new Date().getTime()) {
+            // Token expired, delete everything and redirect to the homepage
+            sessionStorage.removeItem("token");
+            sessionStorage.removeItem("username");
+            sessionStorage.removeItem("tokenExpiry");
+            window.location.replace("/");
+        }
+    }
+    if (!(window.location.pathname == "/" || window.location.pathname == "/users/login" ||
+        window.location.pathname == "/users/register") && sessionStorage.getItem("token") == null) {
+        // Should have a token in all places excluding these three
+        window.location.replace("/");
+    }
+
     if (sessionStorage.getItem("username") != null) {
         $('#goalLinks').html(
             '<li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">' +
@@ -43,6 +58,7 @@ $(document).ready(function () {
     $('#logoutLink').click(function () {
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("username");
+        sessionStorage.removeItem("tokenExpiry");
         return true;
     });
 });
