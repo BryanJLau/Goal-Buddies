@@ -16,7 +16,6 @@ exports.verifyToken = function (req, res, next) {
     
     // decode token
     if (token) {
-        
         // verifies secret and checks exp
         jwt.verify(token, config.tokenSecret, function (err, decoded) {
             if (err) {

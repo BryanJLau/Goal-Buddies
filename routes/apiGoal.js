@@ -2,9 +2,7 @@
 var router = express.Router();
 var url = require('url');
 var HttpStatus = require('http-status-codes');
-var bcrypt = require('bcrypt-nodejs');
 var config = require('../config');
-var jwt = require('jsonwebtoken');
 var middle = require('./commonMiddleware');
 
 var UserModel = require('../models/userModel');
@@ -12,19 +10,45 @@ var GoalModel = require('../models/goalModel');
 
 router.get('/list/', middle.verifyToken, function (req, res, next) {
     var user = req.user;
-    var version = req.params.version || 0;
-    var offset = req.params.offset || 0;
-    var limit = req.params.limit || 10;
-    var type = req.params.type || 0;
-    var finished = req.params.finished || false;
-    
-    console.log("Fetching goals for user id: " + user._id);
+    var version = parseInt(req.query.version) || 0;
+    var offset = parseInt(req.query.offset) || 0;
+    var limit = parseInt(req.query.limit) || 10;
+    var type = parseInt(req.query.type) || 0;
+    // String to convert to bool
+    // Default to true, but false if not 'true' (case insensitive)
+    var pending = req.query.pending ? req.query.pending.toLowerCase() === 'true' : true;
 
-    UserModel.findOne({ '_id': user._id }, function (err, user) {
-        if (err || !user) {
+    console.log("Fetching goals for user id: " + user._id);
+    
+    console.log(user._id);
+    
+    // Need to use aggregate function: get the user, unroll the goals,
+    // then match them according to the parameters, strip off the user id
+    UserModel.aggregate([
+        {
+            $match : {
+                username : user.username    // _id doesn't work?
+            }
+        },
+        { "$unwind": "$goals" },
+        {
+            $match : {
+                'goals.type' : type,
+                'goals.pending' : pending,
+                'goals.version' : { $gt : version }
+            }
+        },
+        {
+            $project : {
+                goals : 1,
+                _id : 0
+            }
+        }
+    ], function (err, result) {
+        if (err) {
             // Invalid credentials
             res.status(HttpStatus.NOT_FOUND);
-            res.json(
+            return res.json(
                 {
                     statusCode : HttpStatus.UNAUTHORIZED,
                     devError : "The token's user is not found. Perhaps " +
@@ -38,22 +62,21 @@ router.get('/list/', middle.verifyToken, function (req, res, next) {
             var goalList = [];
             
             // Sort goals in soonest to latest ETA
-            user.goals.sort(function (a, b) {
+            result.sort(function (a, b) {
                 return a.eta - b.eta;
             });
-
-            for (var i = offset; i <= user.goals.length && goalList.length <= limit; i++) {
-                if (i == user.goals.length || goalList.length == limit) {
+            
+            for (var i = offset; i <= result.length && goalList.length <= limit; i++) {
+                if (i == result.length || goalList.length == limit) {
                     res.status(HttpStatus.OK);
                     return res.json(
                         {
                             goals : goalList,
-                            totalGoals : user.goals.length
+                            totalGoals : result.length
                         }
                     );
                 }
-                else if (user.goals[i].version > version)
-                    goalList.push(user.goals[i]);
+                else goalList.push(result[i].goals);
             }
         }
     });
@@ -180,13 +203,13 @@ router.post('/', middle.verifyToken, function (req, res, next) {
     var description = req.body.description;
     var type = req.body.type;
     var icon = req.body.icon || 0;
-    var daysToFinish = req.body.daysToFinish;
-    
+    var daysToFinish = parseInt(req.body.daysToFinish);
+
     if (typeof description == 'undefined' || typeof type == 'undefined' ||
         typeof daysToFinish == 'undefined' ||
         description == '' || type == '' ||
         daysToFinish == '') {
-        
+
         res.status(HttpStatus.BAD_REQUEST);
         return res.json(
             {
@@ -194,13 +217,9 @@ router.post('/', middle.verifyToken, function (req, res, next) {
                 devError : "Not all required fields were sent to the server. " +
                 "Make sure the user has inputted all fields, and that you have " +
                 "sent all the fields as well.",
-                error : "Please fill in all required fields.",
-                description : description,
-                type : type,
-                daysToFinish : daysToFinish
+                error : "Please fill in all required fields."+description+type+daysToFinish
             }
         );
-        return;
     }
     else {
         UserModel.findOne({ '_id': req.user._id }, function (err, user) {
@@ -223,10 +242,6 @@ router.post('/', middle.verifyToken, function (req, res, next) {
                 
                 // User found, craft a goal, push it onto the goal array, and save
                 var newGoal = new GoalModel();
-                var description = req.body.description;
-                var type = req.body.type;
-                var icon = req.body.icon || 0;
-                var daysToFinish = req.body.daysToFinish;
                 newGoal.description = description;
                 newGoal.type = type;
                 newGoal.icon = icon;
@@ -234,6 +249,8 @@ router.post('/', middle.verifyToken, function (req, res, next) {
                     .getTime() + 86400000 * parseInt(daysToFinish);
                 user.goals.push(newGoal);
                 
+                user.totalGoals++;
+
                 user.save(function (err) {
                     if (err) {
                         res.status(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -250,12 +267,325 @@ router.post('/', middle.verifyToken, function (req, res, next) {
                         console.log("Successfully created goal: " + newGoal._id +
                             " for user " + user._id + ".");
                         res.status(HttpStatus.CREATED);
-                        return res.json(newGoal);
+                        return res.json(
+                            {
+                                goal : newGoal
+                            }
+                        );
                     }
                 });
             }
         });
     }
+});
+
+/*
+ * Edit a goal function
+ * Parameters:
+ *      token : Your personal access token
+ *      id : In the parameter, unique identifier for the goal
+ *      description : Your new description of the goal
+ * Returns:
+ *      statusCode : Ok (205) if successful, Not Found (404) on failure
+ *      goal : A JSONObject representing your new goal details
+ */
+router.post('/:id/edit', middle.cleanBody, middle.verifyToken, function (req, res, next) {
+    var description = req.body.description;
+    
+    if (typeof description == 'undefined' || description == '') {
+        
+        res.status(HttpStatus.BAD_REQUEST);
+        return res.json(
+            {
+                statusCode : HttpStatus.BAD_REQUEST,
+                devError : "Not all required fields were sent to the server. " +
+                "Make sure the user has inputted all fields, and that you have " +
+                "sent all the fields as well.",
+                error : "Please fill in all required fields."
+            }
+        );
+    }
+    else {
+        UserModel.findOne({ '_id': req.user._id }, function (err, user) {
+            if (err || !user) {
+                // Invalid credentials
+                console.log(err);
+                res.status(HttpStatus.NOT_FOUND);
+                return res.json(
+                    {
+                        statusCode : HttpStatus.UNAUTHORIZED,
+                        devError : "The user id contained in the token does " +
+                        "not exist. Try prompting the user to log in again to " +
+                        "get a new token for the user.",
+                        error : "The token's owner is not found. Please login again.",
+                    }
+                );
+            }
+            else {
+                // Find the goal with the id (if it exists)
+                var goal = user.goals.id(req.params.id);
+                
+                if (!goal) {
+                    res.status(HttpStatus.NOT_FOUND);
+                    return res.json(
+                        {
+                            statusCode : HttpStatus.NOT_FOUND,
+                            devError : "The goal with id " + req.params.id +
+                            "was not found. Make sure you do not alter the goal " +
+                            "id before sending a request using it.",
+                            error : "The goal wasn't found. Please try again later."
+                        }
+                    );
+                }
+                else {
+                    if (!goal.pending) {
+                        res.status(HttpStatus.BAD_REQUEST);
+                        return res.json(
+                            {
+                                statusCode : HttpStatus.BAD_REQUEST,
+                                devError : "The goal being editted has already been " +
+                                "completed. Please update the goal list before attempting " +
+                                "to perform more actions.",
+                                error : "You cannot edit an already completed goal."
+                            }
+                        );
+                    }
+                    user.version++;     // Update the user version for easy sync
+                    
+                    // Found the goal, update it and save it
+                    goal.unread = false;    // Just in case it was motivated
+                    goal.description = description;
+                    goal.version = user.version;
+                    
+                    user.save(function (err) {
+                        if (err) {
+                            res.status(HttpStatus.INTERNAL_SERVER_ERROR);
+                            return res.json(
+                                {
+                                    statusCode : HttpStatus.INTERNAL_SERVER_ERROR,
+                                    devError : "Something went wrong with the server. " +
+                                    "Please contact the developer about this.",
+                                    error : "Sorry, something went wrong! Please try again later.",
+                                }
+                            );
+                        }
+                        else {
+                            res.status(HttpStatus.OK);
+                            return res.json(
+                                {
+                                    goal : goal
+                                }
+                            );
+                        }
+                    });     // End user.save
+                }
+            }
+        });     // End UserModel.findOne
+    }
+});
+
+/*
+ * Finish a goal function
+ * Parameters:
+ *      token : Your personal access token
+ *      id : In the parameter, unique identifier for the goal
+ * Returns:
+ *      statusCode : Ok (205) if successful, Unauthorized (401) 
+ *                   Not Found (404), or Bad Request (400) on failure
+ *      goal : A JSONObject representing your new goal details
+ */
+router.post('/:id/finish', middle.verifyToken, function (req, res, next) {
+    UserModel.findOne({ '_id': req.user._id }, function (err, user) {
+        if (err || !user) {
+            // Invalid credentials
+            console.log(err);
+            res.status(HttpStatus.NOT_FOUND);
+            return res.json(
+                {
+                    statusCode : HttpStatus.UNAUTHORIZED,
+                    devError : "The user id contained in the token does " +
+                        "not exist. Try prompting the user to log in again to " +
+                        "get a new token for the user.",
+                    error : "The token's owner is not found. Please login again.",
+                }
+            );
+        }
+        else {
+            // Find the goal with the id (if it exists)
+            var goal = user.goals.id(req.params.id);
+            
+            if (!goal) {
+                res.status(HttpStatus.NOT_FOUND);
+                return res.json(
+                    {
+                        statusCode : HttpStatus.NOT_FOUND,
+                        devError : "The goal with id " + req.params.id +
+                        "was not found. Make sure you do not alter the goal " +
+                        "id before sending a request using it.",
+                        error : "The goal wasn't found. Please try again later."
+                    }
+                );
+            }
+            else {
+                var d = new Date();
+                var today = new Date(d.getFullYear(), d.getMonth(),
+                    d.getDate(), 0, 0, 0, 0).getTime() + 86400000;
+                
+                if (!goal.pending) {
+                    res.status(HttpStatus.BAD_REQUEST);
+                    return res.json(
+                        {
+                            statusCode : HttpStatus.BAD_REQUEST,
+                            devError : "The goal being finished has already been " +
+                            "completed. Please update the goal list before attempting " +
+                            "to perform more actions.",
+                            error : "You cannot finish an already completed goal."
+                        }
+                    );
+                }
+                if (goal.finished >= today) {
+                    res.status(HttpStatus.BAD_REQUEST);
+                    return res.json(
+                        {
+                            statusCode : HttpStatus.BAD_REQUEST,
+                            devError : "Today's date is out of range of the eta or " +
+                            "last finished dates. Please update the goal list before " +
+                            "attempting to perform more actions.",
+                            error : "You cannot finish this goal today. Please update " +
+                            "your current list of goals."
+                        }
+                    );
+                }
+
+                user.version++;     // Update the user version for easy sync
+                user.goalsCompleted++;
+
+                // Found the goal, update it and save it
+                goal.unread = false;    // Just in case it was motivated
+                // Update the last finished date no matter what type
+                goal.finished = today;
+                if(goal.type == 0)  // If recurring, then increment times finished
+                    goal.times++;
+                else {
+                    goal.pending = false;   // One-time goals are finished
+                }
+                goal.version = user.version;
+                
+                user.save(function (err) {
+                    if (err) {
+                        res.status(HttpStatus.INTERNAL_SERVER_ERROR);
+                        return res.json(
+                            {
+                                statusCode : HttpStatus.INTERNAL_SERVER_ERROR,
+                                devError : "Something went wrong with the server. " +
+                                "Please contact the developer about this.",
+                                error : "Sorry, something went wrong! Please try again later.",
+                            }
+                        );
+                    }
+                    else {
+                        res.status(HttpStatus.OK);
+                        return res.json(
+                            {
+                                goal : goal
+                            }
+                        );
+                    }
+                });
+            }
+        }
+    });
+});
+
+/*
+ * Motivate a goal function
+ * Parameters:
+ *      token : Your personal access token
+ * Returns:
+ *      statusCode : OK (200) if successful, Unauthorized (401)
+ *                   or Not Found (404) on failure
+ */
+router.post('/:username/:id/motivate', middle.verifyToken, function (req, res, next) {
+    return res.send("Function not implemented yet.");
+});
+
+/*
+ * Delete a goal function
+ * Parameters:
+ *      token : Your personal access token
+ * Returns:
+ *      statusCode : No Content (204) if successful, Not Found (404) on failure
+ */
+router.post('/:id/delete', middle.verifyToken, function (req, res, next) {
+    UserModel.findOne({ '_id': req.user._id }, function (err, user) {
+        if (err || !user) {
+            // Invalid credentials
+            console.log(err);
+            res.status(HttpStatus.NOT_FOUND);
+            return res.json(
+                {
+                    statusCode : HttpStatus.UNAUTHORIZED,
+                    devError : "The user id contained in the token does " +
+                    "not exist. Try prompting the user to log in again to " +
+                    "get a new token for the user.",
+                    error : "The token's owner is not found. Please login again.",
+                }
+            );
+        }
+        else {
+            // Find the goal with the id (if it exists)
+            var goal = user.goals.id(req.params.id);
+            
+            if (!goal) {
+                res.status(HttpStatus.NOT_FOUND);
+                return res.json(
+                    {
+                        statusCode : HttpStatus.NOT_FOUND,
+                        devError : "The goal with id " + req.params.id +
+                        "was not found. Make sure you do not alter the goal " +
+                        "id before sending a request using it.",
+                        error : "The goal wasn't found. Please try again later."
+                    }
+                );
+            }
+            else {
+                if (!goal.pending) {
+                    res.status(HttpStatus.BAD_REQUEST);
+                    return res.json(
+                        {
+                            statusCode : HttpStatus.BAD_REQUEST,
+                            devError : "The goal being deleted has already been " +
+                            "completed. Please update the goal list before attempting " +
+                            "to perform more actions.",
+                            error : "You cannot delete an already completed goal."
+                        }
+                    );
+                }
+                
+                user.totalGoals--;
+                user.version++;     // Update the user version for easy sync
+                goal.remove();
+
+                user.save(function (err) {
+                    if (err) {
+                        res.status(HttpStatus.INTERNAL_SERVER_ERROR);
+                        return res.json(
+                            {
+                                statusCode : HttpStatus.INTERNAL_SERVER_ERROR,
+                                devError : "Something went wrong with the server. " +
+                                "Please contact the developer about this.",
+                                error : "Sorry, something went wrong! Please try again later.",
+                            }
+                        );
+                    }
+                    else {
+                        res.status(HttpStatus.NO_CONTENT);
+                        return res.send();
+                    }
+                });
+            }
+        }
+    });
 });
 
 module.exports = router;

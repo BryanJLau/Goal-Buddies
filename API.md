@@ -6,7 +6,21 @@ An error will contain a JSONObject with:
 * ``` devError ``` : An error message describing the error for developers
 * ``` error ``` : An error message to be presented to the end user
 
-Note: statusCode BAD_REQUEST (400) will be returned if some fields are missing.
+Note: statusCode BAD_REQUEST (400) will be returned if some fields are missing. 
+statusCode UNAUTHORIZED(401) will be returned if a valid token is not passed 
+for functions that require one.
+
+In very rare cases, statusCode INTERNAL_SERVER_ERROR (500) will be returned 
+in case the server is unable to process your request. In this case, please wait 
+a while before trying again. If the problem persists, please contact the 
+developer about the error, and what function you are attempting to use when 
+encountering the error.
+
+Successful operations will not explicitly return a ``` statusCode ``` member 
+in the JSON response, but will be set in the header.
+
+All responses should be wrapped in a JSON wrapper for extensibility in 
+the future.
 
 API Addresses
 =============
@@ -90,7 +104,8 @@ Parameters:
 
 Returns:
 
-* ``` error ``` : An error message in case of incorrect credentials or server errors
+* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
+or Not Found (404) on failure
 * ``` foreignUser ``` : A JSONObject containing the requested user's public information
 
 Goal
@@ -107,11 +122,12 @@ Parameters:
 * ``` offset ``` : Output goals starting at offset (default: 0)
 * ``` limit ``` : Return up to this many goals (default: 10)
 * ``` type ``` : The type of goals (recurring: 0, one-time: 1, default: 0)
-* ``` finished ``` : True to return finished goals (default: false)
+* ``` pending ``` : True to return in progress goals (default: true)
 
 Returns:
 
-* ``` error ``` : An error message in case of incorrect credentials or server errors
+* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
+or Not Found (404) on failure
 * ``` goals ``` : A JSONArray with goals
 * ``` totalGoals ``` : The total number of goals the user has (for pagination)
 
@@ -148,7 +164,6 @@ Returns:
 
 * ``` statusCode ``` : Created (201) if successful, Unauthorized (401)
 or Not Found (404) on failure
-* ``` error ``` : An error message in case of incorrect credentials or server errors
 * ``` goal ``` : A JSONObject representing your new goal details
 
 Update a goal's description
@@ -162,9 +177,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
-or Not Found (404) on failure
-* ``` error ``` : An error message in case of incorrect credentials or server errors
+* ``` statusCode ``` : OK (200) if successful, Not Found (404) on failure
 * ``` goal ``` : A JSONObject representing your new goal
 
 Finish a goal
@@ -177,14 +190,12 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
-or Not Found (404) on failure
-* ``` error ``` : An error message in case of incorrect credentials or server errors
+* ``` statusCode ``` : OK (200) if successful, Not Found (404) on failure
 * ``` goal ``` : A JSONObject representing your new goal
 
 Motivate a goal
 -------------
-``` POST /goals/:id/motivate ```
+``` POST /goals/:username/:id/motivate ```
 
 Parameters:
 
@@ -194,7 +205,6 @@ Returns:
 
 * ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
 or Not Found (404) on failure
-* ``` error ``` : An error message in case of incorrect credentials or server errors
 
 Delete a goal
 -------------
@@ -206,9 +216,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : No Content (204) if successful, Unauthorized (401)
-or Not Found (404) on failure
-* ``` error ``` : An error message in case of incorrect credentials or server errors
+* ``` statusCode ``` : No Content (204) if successful, Not Found (404) on failure
 
 
 Warning / Disclaimer

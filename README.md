@@ -10,15 +10,16 @@ Timeline
 =============
 The following items are subject to change, and are not in any particular order:
 
-- [x] Setup to run on [OpenShift](http://node-goalbuddies.rhcloud.com/)
+- [x] Setup to run on [OpenShift](http://v2-goalbuddies.rhcloud.com)
 - [x] Schema development
 - [ ] Goal object
-  - [ ] CRUD
+  - [x] CRUD
   - [ ] List with filter/search
   - [ ] Priority calculation algorithm
-  - [ ] Front-end
+  - [x] Front-end
 - [ ] User object
   - [ ] CRUD
+  - [x] Login/registration
   - [ ] Public/private profile
   - [ ] Statistics collection
   - [ ] "News feed" for self and friends

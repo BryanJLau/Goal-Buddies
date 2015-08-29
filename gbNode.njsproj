@@ -110,7 +110,6 @@
     <Compile Include="routes\apiUser.js" />
     <Compile Include="routes\goal.js" />
     <Compile Include="routes\commonMiddleware.js" />
-    <Compile Include="TokenHashTable.js" />
     <Compile Include="routes\user.js" />
   </ItemGroup>
   <!-- Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them. -->
