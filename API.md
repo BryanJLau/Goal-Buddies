@@ -118,11 +118,14 @@ Parameters:
 
 * ``` token ``` : Your personal access token
 * ``` username ``` : (OPTIONAL) The requested user's username
-* ``` version ``` : Get all goals with version > this parameter
+* ``` version ``` : Get all goals with version > this parameter (default: 0)
 * ``` offset ``` : Output goals starting at offset (default: 0)
 * ``` limit ``` : Return up to this many goals (default: 10)
 * ``` type ``` : The type of goals (recurring: 0, one-time: 1, default: 0)
 * ``` pending ``` : True to return in progress goals (default: true)
+* ``` q ``` : (OPTIONAL) A search query for your goals (OR operation unless quotes are used)
+* ``` all ``` : True to return all goals associated with the user 
+(all other parameters are ignored, only use in external applications) (default: false)
 
 Returns:
 
@@ -130,6 +133,8 @@ Returns:
 or Not Found (404) on failure
 * ``` goals ``` : A JSONArray with goals
 * ``` totalGoals ``` : The total number of goals the user has (for pagination)
+* ``` maxVersion ``` : (Only returned with the 'all' parameter set to true) 
+The highest version value of a user's goals
 
 To get your own goals, do not provide a username.
 

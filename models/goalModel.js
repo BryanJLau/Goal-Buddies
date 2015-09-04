@@ -4,6 +4,10 @@ var d = new Date();
 
 // Define our Goal schema
 var GoalSchema = new mongoose.Schema({
+    userId: {
+        type: String,
+        required: true
+    },
     description: {
         type: String,
         required: [
@@ -55,6 +59,9 @@ var GoalSchema = new mongoose.Schema({
         default: 1
     }
 });
+
+// Ascending ETA for earliest first
+GoalSchema.index({ description: "text", eta: 1 });
 
 // Export the Mongoose model
 module.exports = mongoose.model('Goal', GoalSchema);

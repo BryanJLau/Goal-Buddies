@@ -24,8 +24,10 @@
             201: function (data, textStatus, jqXHR) {
                 // Created the goal!
                 // Refresh the view
-                angular.element(document.getElementById('mainBody')).scope().updateList();
-                angular.element(document.getElementById('mainBody')).scope().$apply();
+                angular.element(document.getElementById('mainBody'))
+                    .scope().updateList();
+                angular.element(document.getElementById('mainBody'))
+                    .scope().$apply();
             }
         }
     }
@@ -42,16 +44,20 @@
             }
         },
         highlight: function(element) {
-            $(element).closest('.form-group').removeClass('has-success').addClass('has-error');
+            $(element).closest('.form-group')
+                .removeClass('has-success').addClass('has-error');
             // Change the glyphicon to X
             var id_attr = "#" + $( element ).attr("id") + "g";
-            $(id_attr).removeClass('glyphicon-ok').addClass('glyphicon-remove');         
+            $(id_attr).removeClass('glyphicon-ok')
+                .addClass('glyphicon-remove');
         },
         unhighlight: function(element) {
-            $(element).closest('.form-group').removeClass('has-error').addClass('has-success');
+            $(element).closest('.form-group')
+                .removeClass('has-error').addClass('has-success');
             // Change the glyphicon to V
             var id_attr = "#" + $( element ).attr("id") + "g";
-            $(id_attr).removeClass('glyphicon-remove').addClass('glyphicon-ok');         
+            $(id_attr).removeClass('glyphicon-remove')
+                .addClass('glyphicon-ok');
         },
         errorElement: 'span',
         errorClass: 'help-block',
@@ -67,12 +73,14 @@
                 required: "Please enter a goal!"
             },
             eta: {
-                required: "Please enter how long you expect to take on this goal.",
+                required: "Please enter how long you expect to take on " +
+                    "this goal.",
                 number: "Please input numbers only."
             }
         },
         success: function(element) {
-            element.closest('.form-group').removeClass('has-error').addClass('has-success');
+            element.closest('.form-group')
+                .removeClass('has-error').addClass('has-success');
         }
     });
 
@@ -98,32 +106,22 @@ var goalListApp = angular.module('goalListApp', []);
 
 goalListApp.controller('GoalListCtrl', function ($scope, $http) {
     var d = new Date();
-    $scope.goals = [];
-    $scope.version = 0;     // Start by getting all goals
+    var postData = {
+        token: sessionStorage.getItem("token")
+    }
+
+    // Get today's date's 12 AM to compare with goal dates
     $scope.now = new Date(d.getFullYear(), d.getMonth(), d.getDate(),
         0, 0, 0, 0).getTime();
-    $scope.goalTypeString = "Recurring";
-    $scope.goalType = 0; // Recurring : 0, One-Time : 1
-    $scope.totalGoals = 0;
-    $scope.pending = true;
+
     $scope.editDescription = "";    // Used for editting goals
 
     $scope.init = function () {
         $scope.addForm = {};
-        $scope.updateList();
+        $scope.updateList(0, true);
     }
 
-    // Set the token in the http request
-    var httpConfig = {
-        headers: {
-            'Content-type': 'application/json',
-            'x-access-token': sessionStorage.getItem("token")
-        },
-        params: {
-            pending: $scope.pending     // Initially
-        }
-    };
-
+    // Set the panel class according to the status of the goal
     $scope.panelClass = function (goal) {
         if (goal.pending) {
             if (goal.etaMs <= $scope.now) return 'panel-danger';
@@ -133,61 +131,63 @@ goalListApp.controller('GoalListCtrl', function ($scope, $http) {
         else return 'panel-success';
     }
 
-    $scope.setRecurring = function () {
-        $scope.goalTypeString = "Recurring";
-        $scope.goalType = 0;
-        $scope.pending = true;
-        httpConfig.params.pending = $scope.pending;
-        httpConfig.params.type = $scope.goalType;
-        $scope.updateList();
-    };
+    $scope.updateList = function (type, pending) {
+        // Set the token in the get request
+        var getConfig = {
+            headers: {
+                'Content-type': 'application/json',
+                'x-access-token': sessionStorage.getItem("token")
+            },
+            params: {}
+        };
 
-    $scope.setOneTime = function () {
-        $scope.goalTypeString = "One-Time";
-        $scope.goalType = 1;
-        $scope.pending = true;
-        httpConfig.params.pending = $scope.pending;
-        httpConfig.params.type = $scope.goalType;
-        $scope.updateList();
-    };
+        // Initial setup
+        getConfig.params.pending = pending;
+        getConfig.params.type = type;
 
-    $scope.setFinishedRecurring = function () {
-        $scope.goalTypeString = "Finished Recurring";
-        $scope.goalType = 0;
-        $scope.pending = false;
-        httpConfig.params.pending = $scope.pending;
-        httpConfig.params.type = $scope.goalType;
-        $scope.updateList();
-    };
+        if (pending)
+            $scope.goalTypeString = "";
+        else
+            $scope.goalTypeString = "Finished ";
 
-    $scope.setFinishedOneTime = function () {
-        $scope.goalTypeString = "Finished One-Time";
-        $scope.goalType = 1;
-        $scope.pending = false;
-        httpConfig.params.pending = $scope.pending;
-        httpConfig.params.type = $scope.goalType;
-        $scope.updateList();
-    };
+        if (type == 0)
+            $scope.goalTypeString += "Recurring";
+        else
+            $scope.goalTypeString += "One-Time";
 
-    $scope.updateList = function () {
+        $('#listLoaderGif').removeClass('hidden');
+
+        // Actually send POST request
         if (sessionStorage.getItem("token")) {
-            $http.get('/api/goals/list', httpConfig)
-            .success(function (response) {
-                $scope.goals = response.goals;
-                $scope.totalGoals = response.totalGoals;
-                for (var i = 0; i < $scope.goals.length; i++) {
-                    $scope.goals[i].etaMs = new Date($scope.goals[i].eta).getTime();
-                    $scope.goals[i].finishedMs = new Date($scope.goals[i].finished).getTime();
-                }
-            }).error(function (error) {
-                alert("Something went wrong, try refreshing the page.");
-            });
+            $http.get('/api/goals/list', getConfig)
+                .success(function (response) {
+                    $scope.goals = response.goals;
+                    $scope.totalGoals = response.totalGoals;
+                    for (var i = 0; i < $scope.goals.length; i++) {
+                        // Date manipulation for prettier printing
+                        $scope.goals[i].createdDate =
+                            new Date($scope.goals[i].created).toDateString();
+                        $scope.goals[i].etaMs =
+                            new Date($scope.goals[i].eta).getTime();
+                        $scope.goals[i].finishedMs =
+                            new Date($scope.goals[i].finished).getTime();
+                        $scope.goals[i].etaDate =
+                            new Date($scope.goals[i].eta).toDateString();
+                        $scope.goals[i].finishedDate =
+                            new Date($scope.goals[i].finished).toDateString();
+                    }
+                    $('#listLoaderGif').addClass('hidden');
+                })
+                .error(function (error) {
+                    $('#errorModal').modal('show');
+                    $('#listLoaderGif').addClass('hidden');
+                });
         }
     };
 
     $scope.addGoal = function () {
-        $('#loaderGif').removeClass('hidden');
-        $('#errorDiv').addClass('hidden');
+        $('#addLoaderGif').removeClass('hidden');
+        $('#addErrorDiv').addClass('hidden');
 
         var addData = {
             token: sessionStorage.getItem("token"),
@@ -198,35 +198,32 @@ goalListApp.controller('GoalListCtrl', function ($scope, $http) {
         };
 
         $http.post('/api/goals', addData)
-        .then(function (response) {
-            // Return everything to normal
-            $('#loaderGif').addClass('hidden');
-            console.log(response);
-            $('#addGoalModal').modal('hide');
-            $scope.updateList();
+            .then(function (response) {
+                // Return everything to normal
+                $('#addLoaderGif').addClass('hidden');
+                console.log(response);
+                $('#addGoalModal').modal('hide');
+                $scope.updateList();
 
-            $scope.addGoalForm.$setPristine();
+                $scope.addGoalForm.$setPristine();
 
-            // Reset the form
-            $scope.addForm.description = "";
-            $scope.addForm.daysToFinish = "";
-            $('.selectpicker').selectpicker('val', 'star');
-            $scope.addForm.type = 0;
-        }, function (error) {
-            $('#loaderGif').addClass('hidden');
-            $('#errorMessage').text(error.data.error);
-            $('#errorDiv').removeClass('hidden');
-        });
+                // Reset the form
+                $scope.addForm.description = "";
+                $scope.addForm.daysToFinish = "";
+                $('.selectpicker').selectpicker('val', 'star');
+                $scope.addForm.type = 0;
+            },
+            function (error) {
+                $('#addLoaderGif').addClass('hidden');
+                $('#errorMessage').text(error.data.error);
+                $('#addErrorDiv').removeClass('hidden');
+            });
     };
 
     $scope.finishGoal = function (id) {
-        var finishData = {
-            token: sessionStorage.getItem("token"),
-        };
-
         // Need to delay updateList or else backdrop persists from modal
         setTimeout(function () {
-            $http.post('/api/goals/' + id + '/finish', finishData)
+            $http.post('/api/goals/' + id + '/finish', postData)
             .then(function (response) {
                 $scope.updateList();
             }, function (error) {
@@ -235,16 +232,15 @@ goalListApp.controller('GoalListCtrl', function ($scope, $http) {
         }, 1000);
     }
 
+    // Can't use $scope.editDescription directly, returns undefined always
     $scope.editGoal = function (id, newDescription) {
-        var editData = {
-            token: sessionStorage.getItem("token"),
-            description: newDescription
-        };
+        // Adding description to the body is harmless for other functions
+        postData.description = newDescription;
         $('#me' + id).modal('hide');
 
         // Need to delay updateList or else backdrop persists from modal
         setTimeout(function () {
-            $http.post('/api/goals/' + id + '/edit', editData)
+            $http.post('/api/goals/' + id + '/edit', postData)
             .then(function (response) {
                 $scope.updateList();
                 $("#edescription").val("");
@@ -255,14 +251,11 @@ goalListApp.controller('GoalListCtrl', function ($scope, $http) {
     }
 
     $scope.deleteGoal = function (id) {
-        var deleteData = {
-            token: sessionStorage.getItem("token")
-        };
         $('#md' + id).modal('hide');
 
         // Need to delay updateList or else backdrop persists from modal
         setTimeout(function () {
-            $http.post('/api/goals/' + id + '/delete', deleteData)
+            $http.post('/api/goals/' + id + '/delete', postData)
             .then(function (response) {
                 $scope.updateList();
             }, function (error) {

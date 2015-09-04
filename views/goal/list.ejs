@@ -56,7 +56,7 @@
                     <h4 class="modal-title">Add Goal</h4>
                 </div>
                 <div class="modal-body">
-                    <div id="errorDiv" class='alert alert-danger hidden'>
+                    <div id="addErrorDiv" class='alert alert-danger hidden'>
                         <span class="glyphicon glyphicon-warning-sign"></span>&nbsp;
                         <span id="errorMessage"></span>
                     </div>
@@ -101,7 +101,7 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <img id="loaderGif" src="/images/ajax-loader.gif" class="hidden"/>
+                    <img id="addLoaderGif" src="/images/ajax-loader.gif" class="hidden"/>
                     <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="cancelAdd()">Cancel</button>
                     <button type="button" class="btn btn-primary" ng-click="addGoal()">Add goal!</button>
                 </div>
@@ -117,6 +117,7 @@
             <div class="row">
                 <div class="col-md-1"></div>
                 <div class="col-md-10">
+                    <!-- Navigation -->
 					<div class="col-md-3">
                         <button class="btn btn-success btn-block" data-toggle="modal" data-target="#addGoalModal">
                             <span class="glyphicon glyphicon-plus"></span> Add a goal!
@@ -125,23 +126,23 @@
 							<ul class="nav nav-pills nav-stacked">
                                 <li class="disabled"><a href="#"><strong>In Progress</strong></a></li>
 								<li class="active enabled">
-                                    <a href="#" role="button" ng-click="setRecurring()">
+                                    <a href="#" role="button" ng-click="updateList(0, true)">
                                         <span class="glyphicon glyphicon-repeat"></span> Recurring
                                     </a>
 								</li>
 								<li class="enabled">
-                                    <a href="#" role="button" ng-click="setOneTime()">
+                                    <a href="#" role="button" ng-click="updateList(1, true)">
                                         <span class="glyphicon glyphicon-time"></span> One-Time
                                     </a>
 								</li>
                                 <li class="disabled"><a href="#"><strong>Finished</strong></a></li>
 								<li class="enabled">
-                                    <a href="#" role="button" ng-click="setFinishedRecurring()">
+                                    <a href="#" role="button" ng-click="updateList(0, false)">
                                         <span class="glyphicon glyphicon-repeat"></span> Recurring
                                     </a>
 								</li>
 								<li class="enabled">
-                                    <a href="#" role="button" ng-click="setFinishedOneTime()">
+                                    <a href="#" role="button" ng-click="updateList(1, false)">
                                         <span class="glyphicon glyphicon-time"></span> One-Time
                                     </a>
 								</li>
@@ -152,6 +153,7 @@
 					<div class="col-md-9">
                         <div class="panel panel-default">
                             <div class="panel-heading">
+                                <img id="listLoaderGif" src="/images/ajax-loader.gif" class="hidden"/>
 						        <h4>{{ goalTypeString }} Goals</h4>
                             </div>
                             <div class="panel-body">
@@ -233,12 +235,14 @@
 									         role="tabpanel" aria-labelledby={{ goal._id }}>
 									        <div class="panel-body">
 										        Goal: {{ goal.description }}<br>
-										        Created: {{ goal.created }}<br>
+										        Created: {{ goal.createdDate }}<br>
 										        <div ng-if="goal.finished != null">
-											        Last Finish Date: {{ goal.finished }}<br>
+											        Last Finish Date: {{ goal.finishedDate }}<br>
 										        </div>
-										        Expiration Date: {{ goal.eta }}<br>
-										        Times Completed: {{ goal.times }}<br>
+										        Expiration Date: {{ goal.etaDate }}<br>
+                                                <span ng-if="goal.type == 0">Times Completed:</span>
+                                                <span ng-if="goal.type == 1">Times Motivated:</span>
+                                                 {{ goal.times }}<br>
                                                 <button type="button" class="btn btn-info" 
                                                     data-toggle="modal" data-target="#me{{ goal._id }}"
                                                     ng-if="goal.pending == true">Edit</button>

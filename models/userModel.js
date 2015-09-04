@@ -1,5 +1,5 @@
 ﻿var mongoose = require('mongoose');
-var GoalModel = require('./goalModel');
+//var GoalModel = require('./goalModel');
 //var bcrypt = require('bcrypt-nodejs');
 
 var d = new Date();
@@ -65,8 +65,11 @@ var UserSchema = new mongoose.Schema( {
         default: 0
     },
     
-    // Embed goals into the user document
-    goals: [ GoalModel.schema ],
+    // NOT going to embed goals, never need to join, need to text search
+    // Text search will return the entire user if it contains a goal
+    // with the specified text, no way to aggregate to return only goals
+    // with the search query.
+    //goals: [ GoalModel.schema ],
     version: {
         type: Number,
         default: 0
