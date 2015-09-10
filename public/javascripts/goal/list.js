@@ -104,7 +104,7 @@ $('#addGoalForm').submit(function () {
 
 var goalListApp = angular.module('goalListApp', []);
 
-goalListApp.controller('GoalListCtrl', function ($scope, $http) {
+goalListApp.controller('GoalListCtrl', function ($scope, $http, $timeout) {
     var d = new Date();
     var postData = {
         token: sessionStorage.getItem("token")
@@ -117,9 +117,26 @@ goalListApp.controller('GoalListCtrl', function ($scope, $http) {
     $scope.editDescription = "";    // Used for editting goals
 
     $scope.init = function () {
+        $scope.list = {
+            type: 0,
+            pending: true,
+            searchQuery: ""
+        };
         $scope.addForm = {};
-        $scope.updateList(0, true);
+
+        $scope.updateList();
     }
+
+    var searchUpdateTimer = false;
+    $scope.$watch('list.searchQuery', function () {
+        if (searchUpdateTimer) {
+            // Ignore this change
+            $timeout.cancel(searchUpdateTimer)
+        }
+        searchUpdateTimer = $timeout(function () {
+            $scope.updateList();
+        }, 500)
+    });
 
     // Set the panel class according to the status of the goal
     $scope.panelClass = function (goal) {
@@ -131,7 +148,25 @@ goalListApp.controller('GoalListCtrl', function ($scope, $http) {
         else return 'panel-success';
     }
 
-    $scope.updateList = function (type, pending) {
+    // When the nav is changed
+    $scope.changeTypes = function (type, pending) {
+        if (pending)
+            $scope.goalTypeString = "";
+        else
+            $scope.goalTypeString = "Finished ";
+
+        if (type == 0)
+            $scope.goalTypeString += "Recurring";
+        else
+            $scope.goalTypeString += "One-Time";
+
+        $scope.list.pending = pending;
+        $scope.list.type = type;
+
+        $scope.updateList();
+    }
+
+    $scope.updateList = function () {
         // Set the token in the get request
         var getConfig = {
             headers: {
@@ -142,18 +177,10 @@ goalListApp.controller('GoalListCtrl', function ($scope, $http) {
         };
 
         // Initial setup
-        getConfig.params.pending = pending;
-        getConfig.params.type = type;
-
-        if (pending)
-            $scope.goalTypeString = "";
-        else
-            $scope.goalTypeString = "Finished ";
-
-        if (type == 0)
-            $scope.goalTypeString += "Recurring";
-        else
-            $scope.goalTypeString += "One-Time";
+        console.log($scope.list);
+        getConfig.params.pending = $scope.list.pending;
+        getConfig.params.type = $scope.list.type;
+        getConfig.params.q = $scope.list.searchQuery;
 
         $('#listLoaderGif').removeClass('hidden');
 

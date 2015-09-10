@@ -119,6 +119,16 @@
                 <div class="col-md-10">
                     <!-- Navigation -->
 					<div class="col-md-3">
+                        <div class="input-group">
+                            <input type="text" class="form-control" ng-model="list.searchQuery"
+                                placeholder="Goal search">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="button" ng-click="updateList()">
+                                    <span class="glyphicon glyphicon-search" />
+                                </button>
+                            </span>
+                        </div>
+
                         <button class="btn btn-success btn-block" data-toggle="modal" data-target="#addGoalModal">
                             <span class="glyphicon glyphicon-plus"></span> Add a goal!
                         </button>
@@ -126,23 +136,23 @@
 							<ul class="nav nav-pills nav-stacked">
                                 <li class="disabled"><a href="#"><strong>In Progress</strong></a></li>
 								<li class="active enabled">
-                                    <a href="#" role="button" ng-click="updateList(0, true)">
+                                    <a href="#" role="button" ng-click="changeTypes(0, true)">
                                         <span class="glyphicon glyphicon-repeat"></span> Recurring
                                     </a>
 								</li>
 								<li class="enabled">
-                                    <a href="#" role="button" ng-click="updateList(1, true)">
+                                    <a href="#" role="button" ng-click="changeTypes(1, true)">
                                         <span class="glyphicon glyphicon-time"></span> One-Time
                                     </a>
 								</li>
                                 <li class="disabled"><a href="#"><strong>Finished</strong></a></li>
 								<li class="enabled">
-                                    <a href="#" role="button" ng-click="updateList(0, false)">
+                                    <a href="#" role="button" ng-click="changeTypes(0, false)">
                                         <span class="glyphicon glyphicon-repeat"></span> Recurring
                                     </a>
 								</li>
 								<li class="enabled">
-                                    <a href="#" role="button" ng-click="updateList(1, false)">
+                                    <a href="#" role="button" ng-click="changeTypes(1, false)">
                                         <span class="glyphicon glyphicon-time"></span> One-Time
                                     </a>
 								</li>
