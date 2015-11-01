@@ -1,0 +1,9 @@
+.vcenter {
+    display: inline-block;
+    vertical-align: middle;
+    float: none;
+}
+
+.panel-heading {
+    overflow: hidden;
+}

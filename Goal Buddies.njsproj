@@ -3,7 +3,7 @@
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
-    <Name>gbNode</Name>
+    <Name>Goal Buddies</Name>
     <RootNamespace>ExpressApp1</RootNamespace>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
@@ -69,10 +69,10 @@
     <Content Include="views\about.ejs" />
     <Content Include="views\error.ejs" />
     <Content Include="views\goal\list.ejs" />
-    <Content Include="views\goal\new.ejs" />
     <Content Include="views\header.ejs" />
     <Content Include="views\index.ejs" />
     <Content Include="views\search.ejs" />
+    <Content Include="views\topnav.ejs" />
     <Content Include="views\user\account.ejs" />
     <Content Include="views\user\login.ejs" />
     <Content Include="views\user\profile.ejs" />

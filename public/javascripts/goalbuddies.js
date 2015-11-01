@@ -27,13 +27,7 @@ $(document).ready(function () {
     if (sessionStorage.getItem("username") != null) {
         $('#goalLinks').html(
             '<li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">' +
-                'Goals <span class="caret"></span></a>' +
-                '<ul class="dropdown-menu">' +
-                    '<li><a href="/goals">Your goals</a></li>' +
-                    '<li role="separator" class="divider"></li>' +
-                    '<li><a href="/goals/new">Add a goal!</a></li>' +
-                '</ul>' +
-            '</li>' +
+                '<li><a href="/goals/new">Add a goal!</a></li>' +
             '<li><a href="/about">About</a></li>'
         );
 

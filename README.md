@@ -15,7 +15,7 @@ The following items are subject to change, and are not in any particular order:
 - [x] Schema development
 - [ ] Goal object
   - [x] CRUD
-  - [ ] List with filter/search
+  - [x] List with filter/search
   - [ ] Priority calculation algorithm
   - [x] Front-end
 - [ ] User object

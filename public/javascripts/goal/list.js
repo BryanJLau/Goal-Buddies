@@ -127,10 +127,10 @@ goalListApp.controller('GoalListCtrl', function ($scope, $http, $timeout) {
         $scope.updateList();
     }
 
+    // Have to delay the update, or else modal persists
     var searchUpdateTimer = false;
     $scope.$watch('list.searchQuery', function () {
         if (searchUpdateTimer) {
-            // Ignore this change
             $timeout.cancel(searchUpdateTimer)
         }
         searchUpdateTimer = $timeout(function () {

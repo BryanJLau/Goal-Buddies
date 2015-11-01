@@ -108,6 +108,53 @@ Returns:
 or Not Found (404) on failure
 * ``` foreignUser ``` : A JSONObject containing the requested user's public information
 
+Request a friendship
+-------------
+``` POST /request/:username ```
+
+Parameters:
+
+* ``` token ``` : Your personal access token
+
+Returns:
+
+* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
+or Not Found (404) on failure
+
+Accept a friendship
+-------------
+``` POST /accept/:username ```
+
+Parameters:
+
+* ``` token ``` : Your personal access token
+
+Returns:
+
+* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
+or Not Found (404) on failure
+
+Reject a friendship
+-------------
+``` POST /reject/:username ```
+
+Parameters:
+
+* ``` token ``` : Your personal access token
+
+Block a user
+-------------
+``` POST /block/:username ```
+
+Parameters:
+
+* ``` token ``` : Your personal access token
+
+Returns:
+
+* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
+or Not Found (404) on failure
+
 Goal
 =============
 Get a user's list of goals

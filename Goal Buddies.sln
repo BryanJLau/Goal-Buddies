@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "gbNode", "gbNode.njsproj", "{C4F17923-5516-4E2D-84E9-E2713B4D124A}"
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "Goal Buddies", "Goal Buddies.njsproj", "{C4F17923-5516-4E2D-84E9-E2713B4D124A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
