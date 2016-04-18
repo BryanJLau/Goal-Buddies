@@ -419,8 +419,6 @@ router.post('/:id/finish', middle.verifyToken, function (req, res, next) {
     
     var version = 0;    // Needs to be outside scope of local functions
     var oldGoal = null;  // Needs to be outside to return
-    
-    console.log("1");
 
     // 1. Update goalsCompleted and version for user and save
     UserModel.findByIdAndUpdate(
@@ -439,7 +437,6 @@ router.post('/:id/finish', middle.verifyToken, function (req, res, next) {
     
     // 2. Find the goal
     function savingUser(err, user) {
-        console.log("2");
         if (err) {
             errorHandler.logError(err, res);
         }
@@ -456,7 +453,6 @@ router.post('/:id/finish', middle.verifyToken, function (req, res, next) {
     
     // 3. Update and save the goal
     function findingGoal(err, goal) {
-        console.log("3");
         if (err) {
             errorHandler.logError(err, res);
         }
@@ -489,7 +485,6 @@ router.post('/:id/finish', middle.verifyToken, function (req, res, next) {
 
     // 4. Return the goal to the user
     function savingGoal(err) {
-        console.log("4");
         if (err) {
             errorHandler.logError(err, res);
             rollBackUser();

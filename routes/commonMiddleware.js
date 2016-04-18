@@ -16,7 +16,7 @@ exports.verifyToken = function (req, res, next) {
     // check header or url parameters or post parameters for token
     var token =
         req.body.token || req.query.token || req.headers['x-access-token'];
-    
+	
     // decode token
     if (token) {
         // verifies secret and checks exp
@@ -53,7 +53,7 @@ exports.checkToken = function (req, res, next) {
     if (token) {
         // verifies secret and checks exp
         jwt.verify(token, config.tokenSecret, function (err, decoded) {
-            if (err || decoded.exp <= Date.now()) {
+            if (err || decoded.exp * 1000 <= Date.now()) {
                 req.user = null;    // User isn't required, set to null
                 next();
             }

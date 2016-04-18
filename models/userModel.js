@@ -64,6 +64,11 @@ var UserSchema = new mongoose.Schema( {
         type: Number,
         default: 0
     },
+	
+	// Hold the usernames of relationships
+	friends: [ String ],
+	requesting: [ String ],
+	blocked: [ String ],
     
     // NOT going to embed goals, never need to join, need to text search
     // Text search will return the entire user if it contains a goal

@@ -34,7 +34,9 @@ $(document).ready(function () {
         $('#userLinks').html(
             '<form class="navbar-form navbar-left" role="search" action="/search" method="POST">' +
                 '<div class="form-group">' +
-                    '<input type="text" name="term" class="form-control" placeholder="Search">' +
+                    '<input type="text" name="q" class="form-control" placeholder="Search">' +
+					'<input type="hidden" name="token" value=' + 
+					sessionStorage.getItem("token") + '>' +
                 '</div>' +
                 '<button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-search" /></button>' +
             '</form>' +
@@ -46,12 +48,6 @@ $(document).ready(function () {
     }
     else {
         $('#userLinks').html(
-            '<form class="navbar-form navbar-left" role="search" action="/search" method="POST">' +
-                '<div class="form-group">' +
-                    '<input type="text" name="term" class="form-control" placeholder="Search">' +
-                '</div>' +
-                '<button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-search" /></button>' +
-            '</form>' +
             '<li><a href="/users/register"><span class="glyphicon glyphicon-user"></span> Register</a></li>' +
             '<li><a href="/users/login"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>'
         );
