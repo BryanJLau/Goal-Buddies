@@ -35,16 +35,18 @@ router.get('/search', middle.checkToken, function (req, res, next) {
      * 3. Return the information to the user
      */
 	
+	var q = req.query.q || "";
+	
 	var goalList = [];
 	
 	var goalMatchObject = {
         userId : req.user._id,
         $text : {
-            $search : req.query.q
+            $search : q
         }
     }
 	var userMatchObject = {
-		username : req.query.q
+		username : q
 	}
 	
 	// 1. Find own goals with the keyword
@@ -74,7 +76,7 @@ router.get('/search', middle.checkToken, function (req, res, next) {
 		}
 		else {
 			// Don't display if blocked
-			if(user.blocked.indexOf(req.user.username) > -1) {
+			if(user && user.blocked.indexOf(req.user.username) > -1) {
 				user = null;
 			}
 			

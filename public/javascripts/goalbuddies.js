@@ -26,8 +26,7 @@
 $(document).ready(function () {
     if (sessionStorage.getItem("username") != null) {
         $('#goalLinks').html(
-            '<li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">' +
-                '<li><a href="/goals/new">Add a goal!</a></li>' +
+            '<li><a href="/goals/">My Goals</a></li>' +
             '<li><a href="/about">About</a></li>'
         );
 
