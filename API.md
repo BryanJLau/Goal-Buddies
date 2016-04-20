@@ -91,11 +91,11 @@ be added if necessary)
 
 Note: the personal information is only used for visibility purposes, by no means do 
 you have to input real information if you are not comfortable doing so. Friends will 
-be able to search for you through username or (full name + city).
+be able to search for you through username.
 
 View a user's profile
 -------------
-``` GET /users/:username ```
+``` GET /users/search/:username ```
 
 Parameters:
 

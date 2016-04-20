@@ -31,9 +31,9 @@ $(document).ready(function () {
         );
 
         $('#userLinks').html(
-            '<form class="navbar-form navbar-left" role="search" action="/search" method="POST">' +
+            '<form class="navbar-form navbar-left" role="search" action="/users/search" method="GET">' +
                 '<div class="form-group">' +
-                    '<input type="text" name="q" class="form-control" placeholder="Search">' +
+                    '<input type="text" name="username" class="form-control" placeholder="Username Search">' +
 					'<input type="hidden" name="token" value=' + 
 					sessionStorage.getItem("token") + '>' +
                 '</div>' +

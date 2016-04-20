@@ -317,7 +317,7 @@ router.post('/', middle.verifyToken, function (req, res, next) {
  *      statusCode : Ok (205) if successful, Not Found (404) on failure
  *      goal : A JSONObject representing your new goal details
  */
-router.post('/:id/edit', middle.cleanBody, middle.verifyToken, function (req, res, next) {
+router.post('/:id/edit', middle.verifyToken, function (req, res, next) {
     /*
      * The general flow of the function is as follows:
      * 1. Update version for user and save
@@ -615,7 +615,7 @@ router.post('/:id/delete', middle.verifyToken, function (req, res, next) {
  *      statusCode : Ok (205) if successful, Not Found (404) on failure
  *      goal : A JSONObject representing your new goal details
  */
-router.post('/:id/edit', middle.cleanBody, middle.verifyToken, function (req, res, next) {
+router.post('/:id/edit', middle.verifyToken, function (req, res, next) {
     var description = req.body.description;
     
     if (typeof description == 'undefined' || description == '') {

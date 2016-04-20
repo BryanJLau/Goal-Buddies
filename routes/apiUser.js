@@ -22,7 +22,7 @@ var GoalModel = require('../models/goalModel');
  *              other functions
  *      user : A JSONObject representing your user details
  */
-router.post('/login', middle.cleanBody, function (req, res, next) {
+router.post('/login', function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
     
@@ -57,12 +57,12 @@ router.post('/login', middle.cleanBody, function (req, res, next) {
                         token : jwt.sign(
                             trimmedUser,
                             config.tokenSecret,
-                            { expiresInMinutes: 1440 }  // expires in 24 hours
+                            { expiresInMinutes: 1440 * 30 }  // expires in 1 month
                         ),
                         // This is used in any apps that need to save the credentials
                         // such as the Android app
                         user : trimmedUser,
-                        expires : new Date().getTime() + 24 * 3600000   // Send expiration time as well
+                        expires : new Date().getTime() + 30 * 24 * 3600000   // Send expiration time as well
                     }
                 );
             }
@@ -84,7 +84,7 @@ router.post('/login', middle.cleanBody, function (req, res, next) {
  *              other functions
  *      user : A JSONObject representing your user details
  */
-router.post('/', middle.cleanBody, function (req, res, next) {
+router.post('/', function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
     var firstName = req.body.firstName;
@@ -169,6 +169,17 @@ router.post('/', middle.cleanBody, function (req, res, next) {
     }
 });
 
-
+router.get('/search/:username', middle.verifyToken, function (req, res, next) {
+	var userMatchObject = {
+		username : req.params.username
+	}
+	
+	UserModel.findOne(userMatchObject, function(err, user) {
+		if(user && user.blocked.indexOf(req.user.username) > -1) {
+			user = null;
+		}
+		return res.json(user);
+	});
+});
 
 module.exports = router;

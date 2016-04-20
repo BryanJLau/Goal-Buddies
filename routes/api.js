@@ -79,7 +79,7 @@ router.get('/search', middle.checkToken, function (req, res, next) {
 			if(user && user.blocked.indexOf(req.user.username) > -1) {
 				user = null;
 			}
-			
+		
 			res.status(HttpStatus.OK);
 			var responseJson = {
 				goals : goalList,
