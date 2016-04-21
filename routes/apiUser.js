@@ -169,17 +169,93 @@ router.post('/', function (req, res, next) {
     }
 });
 
+/*
+ * Get a user's details function
+ * Parameters:
+ *      username : The target user's username
+ *      token : Your personal access token
+ * Returns:
+ *      statusCode : Created (201) if successful, Unauthorized (401) on failure
+ *      user : A JSONObject representing the user's available details
+ */
 router.get('/search/:username', middle.verifyToken, function (req, res, next) {
-	var userMatchObject = {
-		username : req.params.username
-	}
-	
-	UserModel.findOne(userMatchObject, function(err, user) {
-		if(user && user.blocked.indexOf(req.user.username) > -1) {
-			user = null;
-		}
-		return res.json(user);
-	});
+    var userMatchObject = {
+        username : req.params.username
+    }
+    
+    UserModel.findOne(userMatchObject, function(err, user) {
+        if(err) {
+            errorHandler.logError(err, res);
+        } else {
+            if(user && user.blocked.indexOf(req.user.username) > -1) {
+                user = null;
+            }
+            return res.json({user: user});
+        }
+    });
 });
+
+/*
+ * Request a friendship with another user
+ * Parameters:
+ *      username : The target user's username
+ *      token : Your personal access token
+ * Returns:
+ *      statusCode : No Content (204) if successful, Unauthorized (401),
+ *                   Bad Request (400), or Not Found (404) on failure
+ */
+router.get('/request/:username', middle.verifyToken, function (req, res, next) {
+    // Find both users
+    UserModel.findOne({username: req.user.username}, function(err, you) {
+        if(err) {
+            errorHandler.logError(err, res);
+        } else {
+            UserModel.findOne({username: req.params.username}, function(err, them) {
+                if(err) {
+                    errorHandler.logError(err, res);
+                } else {
+                    foundBoth(you, them);
+                }
+            }
+        }
+    });
+    
+    function foundBoth(you, them) {
+        var yourUsername = you.username;
+        var theirUsername = them.username;
+        
+        if(you.blocked.indexOf(theirUsername) > -1 || them.blocked.indexOf(yourUsername)) {
+            // Someone blocked someone
+            errorHandler.targetUserNotFound(err, res);
+        } else if (you.incoming.indexOf(theirUsername) > -1 || them.incoming.indexOf(yourUsername) ||
+                   you.outgoing.indexOf(theirUsername) > -1 || them.outgoing.indexOf(yourUsername)}){
+            // You can't request when a request is already in progress
+            errorHandler.relationFunctionInProgress(err, res);
+        } else if (you.friends.indexOf(theirUsername) > -1 || them.friends.indexOf(yourUsername)){
+            // You can't request when you're already friends
+            errorHandler.relationFunctionInProgress(err, res);
+        } else {
+            // Everything is fine, update and save
+            you.outgoing.push(theirUsername);
+            you.save(function(err) {
+                if(err) {
+                    errorHandler.logError(err, res);
+                } else {
+                    them.incoming.push(yourUsername);
+                    them.save(function(err) {
+                        if(err) {
+                            errorHandler.logError(err, res);
+                        } else {
+                            res.status(HttpStatus.NO_CONTENT);
+                            return res.send('');
+                        }
+                    });
+                }
+            });
+        }
+    }
+});
+
+
 
 module.exports = router;

@@ -67,7 +67,8 @@ var UserSchema = new mongoose.Schema( {
 	
 	// Hold the usernames of relationships
 	friends: [ String ],
-	requesting: [ String ],
+	incoming: [ String ],
+	outgoing: [ String ],
 	blocked: [ String ],
     
     // NOT going to embed goals, never need to join, need to text search

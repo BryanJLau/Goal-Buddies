@@ -31,11 +31,11 @@ $(document).ready(function () {
         );
 
         $('#userLinks').html(
-            '<form class="navbar-form navbar-left" role="search" action="/users/search" method="GET">' +
+            '<form class="navbar-form navbar-left" role="search" action="/users/profile" method="GET">' +
                 '<div class="form-group">' +
                     '<input type="text" name="username" class="form-control" placeholder="Username Search">' +
-					'<input type="hidden" name="token" value=' + 
-					sessionStorage.getItem("token") + '>' +
+                    '<input type="hidden" name="token" value=' + 
+                    sessionStorage.getItem("token") + '>' +
                 '</div>' +
                 '<button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-search" /></button>' +
             '</form>' +

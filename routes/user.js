@@ -10,24 +10,24 @@ var UserModel = require('../models/userModel');
 
 /* GET users listing. */
 router.get('/', middle.checkToken, function (req, res, next) {
-    if (req.user)
-        return res.redirect("/goals");  // User is already logged in
-    else
-        return res.render('user/login');
+	if (req.user)
+		return res.redirect("/goals");	// User is already logged in
+	else
+		return res.render('user/login');
 });
 
 router.get('/login', middle.checkToken, function (req, res, next) {
-    if (req.user)
-        return res.redirect("/goals");  // User is already logged in
-    else
-        return res.render('user/login');
+	if (req.user)
+		return res.redirect("/goals");	// User is already logged in
+	else
+		return res.render('user/login');
 });
 
 router.get('/register', middle.checkToken, function (req, res, next) {
-    if (req.user)
-        return res.redirect("/goals");  // User is already logged in
-    else
-        return res.render('user/register');
+	if (req.user)
+		return res.redirect("/goals");	// User is already logged in
+	else
+		return res.render('user/register');
 });
 
 router.get('/profile', middle.verifyToken, function (req, res, next) {
@@ -40,7 +40,12 @@ router.get('/profile', middle.verifyToken, function (req, res, next) {
 			user = null;
 		}
 		
-		return res.render('user/profile', user);
+		var returnJson = {
+			user: user,
+			you: req.user.username
+		}
+		
+		return res.render('user/profile', returnJson);
 	});
 });
 

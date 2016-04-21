@@ -1,10 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
-<title>Goal Buddies - <%= username ? username : "Not Found" %></title>
+<title>Goal Buddies - <%= user ? user.username : "Not Found" %></title>
 <% include ../header.ejs %>
 
 <div class="container">
-        <% include ../topnav.ejs %>
-		<%= username ? username : "Not Found" %>
+    <% include ../topnav.ejs %>
+    
+    <div class="container-fluid">
+        <div class="row">
+            <% if(user) { %>
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading text-center">
+                        <h1>User Details</h1>
+                    </div>
+                    <div class="panel-body">
+                        <dl class="dl-horizontal">
+                            <dt>Location</dt>
+                            <dd><%= user.city %></dd>
+                            <% if(user.friends.indexOf(you) > -1) { %>
+                            <dt>Name</dt>
+                            <dd><%= user.firstName + " " + user.lastName %></dd>
+                            <dt>Date Joined</dt>
+                            <dd><%= user.dateCreated %></dd>
+                            <dt>Total Goals</dt>
+                            <dd><%= user.totalGoals %></dd>
+                            <dt>Goals Completed</dt>
+                            <dd><%= user.goalsCompleted %></dd>
+                            <dt>Motivated</dt>
+                            <dd><%= user.timesMotivated %></dd>
+                            <% } %>
+                        </dl>
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <!-- Relationship functions -->
+                <div class="well">
+                    <% if(user.friends.indexOf(you) > -1) { %>
+                    You're friends!
+                    <% } else if(user.incoming.indexOf(you) > -1) { %>
+                    You've already sent an invite
+                    <% } else if(user.outgoing.indexOf(you) > -1) { %>
+                    You're receiving an invite from this person
+                    <% } else { %>
+                    You can send an invite to this person
+                    <% } %>
+                </div>
+                
+                
+                <div class="panel panel-default">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Current Goals</h3>
+                        </div>
+                        
+                        <div class="panel-body">
+                            <% if(user.friends.indexOf(you) > -1) { %>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li role="presentation" class="active"><a href="#onetime" aria-controls="home" role="tab" data-toggle="tab">One Time</a></li>
+                                <li role="presentation"><a href="#recurring" aria-controls="profile" role="tab" data-toggle="tab">Recurring</a></li>
+                            </ul>
+                            
+                            <div class="tab-content">
+                                <div role="tabpanel" class="tab-pane active" id="onetime">One Time</div>
+                                <div role="tabpanel" class="tab-pane" id="recurring">Recurring</div>
+                            </div>
+                            <% } else { %>
+                            <div class="alert alert-info" role="alert">
+                                You can't see this person's goals until you become friends. Send a request today!
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <% } else { %>
+            <div class="col-md-12">
+                <div class="alert alert-danger" role="alert">
+                    Nobody with this username exists!
+                </div>
+            </div>
+            <% } %>
+        </div>
+    </div>
 </div>
 </html>

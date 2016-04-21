@@ -28,29 +28,29 @@ function apiNotFound(req, res, next) {
 }
 
 router.get('/search', middle.checkToken, function (req, res, next) {
-	/*
+    /*
      * The general flow of the function is as follows:
      * 1. Find own goals with the keyword
      * 2. Find a user with the corresponding username
      * 3. Return the information to the user
      */
-	
-	var q = req.query.q || "";
-	
-	var goalList = [];
-	
-	var goalMatchObject = {
+    
+    var q = req.query.q || "";
+    
+    var goalList = [];
+    
+    var goalMatchObject = {
         userId : req.user._id,
         $text : {
             $search : q
         }
     }
-	var userMatchObject = {
-		username : q
-	}
-	
-	// 1. Find own goals with the keyword
-	GoalModel.find(goalMatchObject, function (err, goals) {
+    var userMatchObject = {
+        username : q
+    }
+    
+    // 1. Find own goals with the keyword
+    GoalModel.find(goalMatchObject, function (err, goals) {
         if (err) {
             // Invalid credentials
             errorHandler.userNotFound(res);
@@ -61,33 +61,33 @@ router.get('/search', middle.checkToken, function (req, res, next) {
             var maxVersion = 0;
             
             for (var i = 0; i < goals.length; i++) {
-				goalList.push(goals[i]);
+                goalList.push(goals[i]);
             }
-			
-			UserModel.findOne(userMatchObject, 'username blocked', findUser);
+            
+            UserModel.findOne(userMatchObject, 'username blocked', findUser);
         }
     });
-	
-	// 2. Find a user with the corresponding username
-	function findUser(err, user) {
-		if (err) {
-			// Invalid credentials
-			errorHandler.userNotFound(res);
-		}
-		else {
-			// Don't display if blocked
-			if(user && user.blocked.indexOf(req.user.username) > -1) {
-				user = null;
-			}
-		
-			res.status(HttpStatus.OK);
-			var responseJson = {
-				goals : goalList,
-				user : user
-			}
-			return res.json(responseJson);
-		}
-	}
+    
+    // 2. Find a user with the corresponding username
+    function findUser(err, user) {
+        if (err) {
+            // Invalid credentials
+            errorHandler.userNotFound(res);
+        }
+        else {
+            // Don't display if blocked
+            if(user && user.blocked.indexOf(req.user.username) > -1) {
+                user = null;
+            }
+        
+            res.status(HttpStatus.OK);
+            var responseJson = {
+                goals : goalList,
+                user : user
+            }
+            return res.json(responseJson);
+        }
+    }
 });
 
 router.get('/', function (req, res, next) {

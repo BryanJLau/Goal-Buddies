@@ -118,7 +118,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
+* ``` statusCode ``` :No Content (204) if successful, Unauthorized (401)
 or Not Found (404) on failure
 
 Accept a friendship
@@ -131,7 +131,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
+* ``` statusCode ``` :No Content (204) if successful, Unauthorized (401)
 or Not Found (404) on failure
 
 Reject a friendship
@@ -141,6 +141,11 @@ Reject a friendship
 Parameters:
 
 * ``` token ``` : Your personal access token
+
+Returns:
+
+* ``` statusCode ``` :No Content (204) if successful, Unauthorized (401)
+or Not Found (404) on failure
 
 Block a user
 -------------
@@ -152,7 +157,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
+* ``` statusCode ``` :No Content (204) if successful, Unauthorized (401)
 or Not Found (404) on failure
 
 Goal
@@ -255,7 +260,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
+* ``` statusCode ``` : No Content (204) if successful, Unauthorized (401)
 or Not Found (404) on failure
 
 Delete a goal
