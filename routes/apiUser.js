@@ -226,7 +226,7 @@ router.get('/request/:username', middle.verifyToken, function (req, res, next) {
                 } else {
                     foundBoth(you, them);
                 }
-            }
+            });
         }
     });
     
@@ -234,16 +234,18 @@ router.get('/request/:username', middle.verifyToken, function (req, res, next) {
         var yourUsername = you.username;
         var theirUsername = them.username;
         
-        if(you.blocked.indexOf(theirUsername) > -1 || them.blocked.indexOf(yourUsername)) {
+        if(you.blocked.indexOf(theirUsername) > -1 || them.blocked.indexOf(yourUsername) > -1) {
             // Someone blocked someone
-            errorHandler.targetUserNotFound(err, res);
-        } else if (you.incoming.indexOf(theirUsername) > -1 || them.incoming.indexOf(yourUsername) ||
-                   you.outgoing.indexOf(theirUsername) > -1 || them.outgoing.indexOf(yourUsername)}){
+            console.log(you.blocked);
+            console.log(them.blocked);
+            errorHandler.targetUserNotFound(res);
+        } else if (you.incoming.indexOf(theirUsername) > -1 || them.incoming.indexOf(yourUsername) > -1 ||
+                   you.outgoing.indexOf(theirUsername) > -1 || them.outgoing.indexOf(yourUsername) > -1 ){
             // You can't request when a request is already in progress
-            errorHandler.relationFunctionInProgress(err, res);
-        } else if (you.friends.indexOf(theirUsername) > -1 || them.friends.indexOf(yourUsername)){
+            errorHandler.relationFunctionInProgress(res);
+        } else if (you.friends.indexOf(theirUsername) > -1 || them.friends.indexOf(yourUsername) > -1 ){
             // You can't request when you're already friends
-            errorHandler.relationFunctionInProgress(err, res);
+            errorHandler.relationFunctionInProgress(res);
         } else {
             // Everything is fine, update and save
             you.outgoing.push(theirUsername);
@@ -262,7 +264,7 @@ router.get('/request/:username', middle.verifyToken, function (req, res, next) {
                                 } else {
                                     errorHandler.logError(err, res);
                                 }
-                            }
+                            });
                         } else {
                             res.status(HttpStatus.NO_CONTENT);
                             return res.send('');
@@ -270,6 +272,73 @@ router.get('/request/:username', middle.verifyToken, function (req, res, next) {
                     });
                 }
             });
+        }
+    }
+});
+
+/*
+ * Accept a friendship with another user
+ * Parameters:
+ *      username : The target user's username
+ *      token : Your personal access token
+ * Returns:
+ *      statusCode : No Content (204) if successful, Unauthorized (401),
+ *                   Bad Request (400), or Not Found (404) on failure
+ */
+router.get('/accept/:username', middle.verifyToken, function (req, res, next) {
+    // Find both users
+    UserModel.findOne({username: req.user.username}, function(err, you) {
+        if(err) {
+            errorHandler.logError(err, res);
+        } else {
+            UserModel.findOne({username: req.params.username}, function(err, them) {
+                if(err) {
+                    errorHandler.logError(err, res);
+                } else {
+                    foundBoth(you, them);
+                }
+            });
+        }
+    });
+    
+    function foundBoth(you, them) {
+        var yourUsername = you.username;
+        var theirUsername = them.username;
+        
+        if(you.incoming.indexOf(theirUsername) > -1 &&
+           them.outgoing.indexOf(yourUsername) > -1) {
+            // All good, proceed
+            
+            you.friends.push(theirUsername);
+            removeUsername(you.incoming, theirUsername);
+            you.save(function(err) {
+                if(err) {
+                    errorHandler.logError(err, res);
+                } else {
+                    // Change the other user
+                    them.friends.push(yourUsername);
+                    removeUsername(them.outgoing, yourUsername);
+                    them.save(function (err) {
+                        if(err) {
+                            // Rollback your incoming and friends list
+                            removeUsername(you.friends, theirUsername);
+                            you.incoming.push(theirUsername);
+                            you.save(function(yourErr) {
+                                if(yourErr) {
+                                    errorHandler.logError(yourErr, res);
+                                } else {
+                                    errorHandler.logError(err, res);
+                                }
+                            });
+                        } else {
+                            res.status(HttpStatus.NO_CONTENT);
+                            return res.send('');
+                        }
+                    });
+                }
+            });
+        } else {
+            errorHandler.badRequest(res);
         }
     }
 });
