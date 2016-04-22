@@ -11,6 +11,16 @@ var errorHandler = require('../lib/errorHandler');
 var UserModel = require('../models/userModel');
 var GoalModel = require('../models/goalModel');
 
+// Auxiliary function to remove a username from an array
+function removeUsername(targetArray, username) {
+    var i = 0;
+    for(; i < targetArray.length; i++) {
+        if(targetArray[i] == username) break;
+    }
+    
+    targetArray.splice(i, 1);
+}
+
 /*
  * Login function
  * Parameters:
@@ -244,7 +254,15 @@ router.get('/request/:username', middle.verifyToken, function (req, res, next) {
                     them.incoming.push(yourUsername);
                     them.save(function(err) {
                         if(err) {
-                            errorHandler.logError(err, res);
+                            // Undo your outgoing array because it was pushed
+                            removeUsername(you.outgoing, theirUsername);
+                            you.save(function(yourErr) {
+                                if(yourErr) {
+                                    errorHandler.logError(yourErr, res);
+                                } else {
+                                    errorHandler.logError(err, res);
+                                }
+                            }
                         } else {
                             res.status(HttpStatus.NO_CONTENT);
                             return res.send('');
