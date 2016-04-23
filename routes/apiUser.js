@@ -343,6 +343,68 @@ router.get('/accept/:username', middle.verifyToken, function (req, res, next) {
     }
 });
 
-
+/*
+ * Reject a friendship with another user
+ * Parameters:
+ *      username : The target user's username
+ *      token : Your personal access token
+ * Returns:
+ *      statusCode : No Content (204) if successful, Unauthorized (401),
+ *                   Bad Request (400), or Not Found (404) on failure
+ */
+router.get('/reject/:username', middle.verifyToken, function (req, res, next) {
+    // Find both users
+    UserModel.findOne({username: req.user.username}, function(err, you) {
+        if(err) {
+            errorHandler.logError(err, res);
+        } else {
+            UserModel.findOne({username: req.params.username}, function(err, them) {
+                if(err) {
+                    errorHandler.logError(err, res);
+                } else {
+                    foundBoth(you, them);
+                }
+            });
+        }
+    });
+    
+    function foundBoth(you, them) {
+        var yourUsername = you.username;
+        var theirUsername = them.username;
+        
+        if(you.incoming.indexOf(theirUsername) > -1 &&
+           them.outgoing.indexOf(yourUsername) > -1) {
+            // All good, proceed
+            
+            removeUsername(you.incoming, theirUsername);
+            you.save(function(err) {
+                if(err) {
+                    errorHandler.logError(err, res);
+                } else {
+                    // Change the other user
+                    removeUsername(them.outgoing, yourUsername);
+                    them.save(function (err) {
+                        if(err) {
+                            // Rollback your incoming list
+                            you.incoming.push(theirUsername);
+                            you.save(function(yourErr) {
+                                if(yourErr) {
+                                    errorHandler.logError(yourErr, res);
+                                } else {
+                                    errorHandler.logError(err, res);
+                                }
+                            });
+                        } else {
+                            res.status(HttpStatus.NO_CONTENT);
+                            return res.send('');
+                        }
+                    });
+                }
+            });
+        } else {
+            errorHandler.badRequest(res);
+        }
+    }
+});
 
 module.exports = router;
