@@ -407,4 +407,80 @@ router.get('/reject/:username', middle.verifyToken, function (req, res, next) {
     }
 });
 
+/*
+ * Get your friends list
+ * Parameters:
+ *      token : Your personal access token
+ * Returns:
+ *      statusCode : Ok (200) if successful, Not Found (404) on failure
+ *      JSONArray: An array of usernames of your friends
+ */
+router.get('/social/friends', middle.verifyToken, function (req, res, next) {
+    // Find both users
+    UserModel.findOne({username: req.user.username}, 'friends', function(err, user) {
+        if(err) {
+            errorHandler.logError(err, res);
+        } else if(!user) {
+            errorHandler.userNotFound(res);
+        } else {
+            if(user.friends) {
+                return res.json(user.friends);
+            } else {
+                return res.json([]);
+            }
+        }
+    });
+});
+
+/*
+ * Get your pending requests list
+ * Parameters:
+ *      token : Your personal access token
+ * Returns:
+ *      statusCode : Ok (200) if successful, Not Found (404) on failure
+ *      JSONArray: An array of usernames of people requesting friendship
+ *                 with you
+ */
+router.get('/social/pending', middle.verifyToken, function (req, res, next) {
+    // Find both users
+    UserModel.findOne({username: req.user.username}, 'pending', function(err, user) {
+        if(err) {
+            errorHandler.logError(err, res);
+        } else if(!user) {
+            errorHandler.userNotFound(res);
+        } else {
+            if(user.pending) {
+                return res.json(user.pending);
+            } else {
+                return res.json([]);
+            }
+        }
+    });
+});
+
+/*
+ * Get your friends list
+ * Parameters:
+ *      token : Your personal access token
+ * Returns:
+ *      statusCode : Ok (200) if successful, Not Found (404) on failure
+ *      JSONArray: An array of usernames of people you have blocked
+ */
+router.get('/social/blocked', middle.verifyToken, function (req, res, next) {
+    // Find both users
+    UserModel.findOne({username: req.user.username}, 'blocked', function(err, user) {
+        if(err) {
+            errorHandler.logError(err, res);
+        } else if(!user) {
+            errorHandler.userNotFound(res);
+        } else {
+            if(user.blocked) {
+                return res.json(user.blocked);
+            } else {
+                return res.json([]);
+            }
+        }
+    });
+});
+
 module.exports = router;

@@ -118,7 +118,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` :No Content (204) if successful, Unauthorized (401)
+* ``` statusCode ``` : No Content (204) if successful, Unauthorized (401)
 or Not Found (404) on failure
 
 Accept a friendship
@@ -131,7 +131,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` :No Content (204) if successful, Unauthorized (401)
+* ``` statusCode ``` : No Content (204) if successful, Unauthorized (401)
 or Not Found (404) on failure
 
 Reject a friendship
@@ -144,7 +144,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` :No Content (204) if successful, Unauthorized (401)
+* ``` statusCode ``` : No Content (204) if successful, Unauthorized (401)
 or Not Found (404) on failure
 
 Block a user
@@ -157,8 +157,48 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` :No Content (204) if successful, Unauthorized (401)
+* ``` statusCode ``` : No Content (204) if successful, Unauthorized (401)
 or Not Found (404) on failure
+
+Get your friends list
+-------------
+``` GET /social/friends ```
+
+Parameters:
+
+* ``` token ``` : Your personal access token
+
+Returns:
+
+* ``` statusCode ``` : OK (200) if successful,  Not Found (404) on failure
+* ``` JSONArray ``` : An array of usernames of your friends
+
+Get your pending requests list
+-------------
+``` GET /social/pending ```
+
+Parameters:
+
+* ``` token ``` : Your personal access token
+
+Returns:
+
+* ``` statusCode ``` : OK (200) if successful,  Not Found (404) on failure
+* ``` JSONArray ``` : An array of usernames of people requesting friendship
+with you
+
+Get your blocked list
+-------------
+``` GET /social/blocked ```
+
+Parameters:
+
+* ``` token ``` : Your personal access token
+
+Returns:
+
+* ``` statusCode ``` : OK (200) if successful,  Not Found (404) on failure
+* ``` JSONArray ``` : An array of usernames of people you have blocked
 
 Goal
 =============
