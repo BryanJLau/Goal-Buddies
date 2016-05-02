@@ -65,7 +65,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : Created (201) if successful, Unauthorized (401) on failure
+* ``` statusCode ``` : OK (200) if successful, Unauthorized (401) on failure
 * ``` token ``` : A unique token (application specific) required for other functions
 * ``` user ``` : A JSONObject containing your username and id (more information may 
 be added if necessary)

@@ -441,16 +441,16 @@ router.get('/social/friends', middle.verifyToken, function (req, res, next) {
  *      JSONArray: An array of usernames of people requesting friendship
  *                 with you
  */
-router.get('/social/pending', middle.verifyToken, function (req, res, next) {
+router.get('/social/incoming', middle.verifyToken, function (req, res, next) {
     // Find both users
-    UserModel.findOne({username: req.user.username}, 'pending', function(err, user) {
+    UserModel.findOne({username: req.user.username}, 'incoming', function(err, user) {
         if(err) {
             errorHandler.logError(err, res);
         } else if(!user) {
             errorHandler.userNotFound(res);
         } else {
-            if(user.pending) {
-                return res.json(user.pending);
+            if(user.incoming) {
+                return res.json(user.incoming);
             } else {
                 return res.json([]);
             }
