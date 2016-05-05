@@ -50,7 +50,7 @@ Tokens have the format:
 * ``` username ``` : Your username
 * ``` expires ``` : Datetime (in ms) of when your token expires
 
-Tokens have (by default) a 1 day lifespan.
+Tokens have (by default) a 30 day lifespan.
 
 User
 =============
@@ -106,7 +106,7 @@ Returns:
 
 * ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
 or Not Found (404) on failure
-* ``` foreignUser ``` : A JSONObject containing the requested user's public information
+* ``` user ``` : A JSONObject containing the requested user's public information
 
 Request a friendship
 -------------

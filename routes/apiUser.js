@@ -193,14 +193,49 @@ router.get('/search/:username', middle.verifyToken, function (req, res, next) {
         username : req.params.username
     }
     
-    UserModel.findOne(userMatchObject, function(err, user) {
+    var returnFields = 'username firstName lastName city goalsCompleted ' +
+        'blocked friends incoming outgoing';
+    
+    UserModel.findOne(userMatchObject, returnFields, function(err, user) {
         if(err) {
             errorHandler.logError(err, res);
         } else {
-            if(user && user.blocked.indexOf(req.user.username) > -1) {
-                user = null;
+            if(!user || user.blocked.indexOf(req.user.username) > -1) {
+                errorHandler.userNotFound(res);
+            } else {
+                // Mongoose may be protecting the resulting object
+                // making it so that we can't delete properties
+                // (even if we're not saving it back)
+                // So we'll just construct a new object instead
+                
+                // Simplify the social arrays to only contain you
+                // That way we can see your relation to this person
+                var resultUser = {
+                    friends: [],
+                    incoming: [],
+                    outgoing: [],
+                    firstName: "",
+                    lastName: "",
+                    city: user.city,
+                    username: user.username,
+                    goalsCompleted: user.goalsCompleted
+                };
+                
+                if(user.friends.indexOf(req.user.username) > -1) {
+                    // Friend
+                    resultUser.friends.push(req.user.username);
+                    resultUser.firstName = user.firstName;
+                    resultUser.lastName = user.lastName;
+                } else if(user.incoming.indexOf(req.user.username) > -1) {
+                    // You're requesting friendship
+                    resultUser.incoming.push(req.user.username);
+                } else if(user.outgoing.indexOf(req.user.username) > -1) {
+                    // They're requesting friendship
+                    resultUser.outgoing.push(req.user.username);
+                }
+                
+                return res.json({user: resultUser});
             }
-            return res.json({user: user});
         }
     });
 });
