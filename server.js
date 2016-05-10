@@ -7,6 +7,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var subdomain = require('express-subdomain');
 var mongoose = require('mongoose');
+var sassMiddleware = require('node-sass-middleware');
 var app = express();
 var config = require('./config');
 var middle = require('./routes/commonMiddleware');
@@ -24,6 +25,16 @@ app.set('view engine', 'ejs');
 //app.use(express.methodOverride());
 var stylus = require('stylus');
 app.use(stylus.middleware(path.join(__dirname, 'public')));
+
+app.use(sassMiddleware({
+    /* Options */
+    src: __dirname + '/public/stylesheets/sass',
+    dest: path.join(__dirname, '/public/stylesheets'),
+    debug: true,
+    outputStyle: 'compressed',
+    prefix:  '/stylesheets'  // Where prefix is at <link rel="stylesheets" href="prefix/style.css"/>
+}));
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // uncomment after placing your favicon in /public
