@@ -21,6 +21,32 @@ function removeUsername(targetArray, username) {
     targetArray.splice(i, 1);
 }
 
+// Auxiliary function to handle prep for social functions
+function prepSocial(req, res, callback) {
+    var username = req.params.username;
+    if (typeof username == 'undefined' || username == '') {
+        errorHandler.missingParameters(res);
+    } else if(username == req.user.username) {
+        // You can't request to be friends with yourself!
+        errorHandler.badRequest(res);
+    } else {
+        // Find both users
+        UserModel.findOne({username: req.user.username}, function(err, you) {
+            if(err) {
+                errorHandler.logError(err, res);
+            } else {
+                UserModel.findOne({username: req.params.username}, function(err, them) {
+                    if(err) {
+                        errorHandler.logError(err, res);
+                    } else {
+                        callback(you, them);
+                    }
+                });
+            }
+        });
+    }
+}
+
 /*
  * Login function
  * Parameters:
@@ -108,8 +134,6 @@ router.post('/', function (req, res, next) {
         firstName == '' || lastName == '' || 
         city == '') {
 
-        // Not all fields were entered
-        console.log("Attempted registration, missing fields.");
         errorHandler.missingParameters(res);
     }
     else {
@@ -162,10 +186,12 @@ router.post('/', function (req, res, next) {
                                 token : jwt.sign(
                                     trimmedUser,
                                     config.tokenSecret,
-                                    { expiresInMinutes: 1440 }  // expires in 24 hours
+                                    { expiresInMinutes: 1440 * 30 }  // expires in 1 month
                                 ),
+                                // This is used in any apps that need to save the credentials
+                                // such as the Android app
                                 user : trimmedUser,
-                                expires : new Date().getTime() + 24 * 3600000   // Send expiration time as well
+                                expires : new Date().getTime() + 30 * 24 * 3600000   // Send expiration time as well
                             }
                         );
                     }
@@ -185,16 +211,17 @@ router.post('/', function (req, res, next) {
  *      username : The target user's username
  *      token : Your personal access token
  * Returns:
- *      statusCode : Created (201) if successful, Unauthorized (401) on failure
+ *      statusCode : OK (200) if successful
  *      user : A JSONObject representing the user's available details
  */
 router.get('/search/:username', middle.verifyToken, function (req, res, next) {
+    // Set the username match to someone else, or yourself
     var userMatchObject = {
-        username : req.params.username
+        username : req.params.username ? req.params.username : req.user.username
     }
     
     var returnFields = 'username firstName lastName city goalsCompleted ' +
-        'blocked friends incoming outgoing';
+        'timesMotivated blocked friends incoming outgoing';
     
     UserModel.findOne(userMatchObject, returnFields, function(err, user) {
         if(err) {
@@ -203,38 +230,44 @@ router.get('/search/:username', middle.verifyToken, function (req, res, next) {
             if(!user || user.blocked.indexOf(req.user.username) > -1) {
                 errorHandler.userNotFound(res);
             } else {
-                // Mongoose may be protecting the resulting object
-                // making it so that we can't delete properties
-                // (even if we're not saving it back)
-                // So we'll just construct a new object instead
-                
-                // Simplify the social arrays to only contain you
-                // That way we can see your relation to this person
-                var resultUser = {
-                    friends: [],
-                    incoming: [],
-                    outgoing: [],
-                    firstName: "",
-                    lastName: "",
-                    city: user.city,
-                    username: user.username,
-                    goalsCompleted: user.goalsCompleted
-                };
-                
-                if(user.friends.indexOf(req.user.username) > -1) {
-                    // Friend
-                    resultUser.friends.push(req.user.username);
-                    resultUser.firstName = user.firstName;
-                    resultUser.lastName = user.lastName;
-                } else if(user.incoming.indexOf(req.user.username) > -1) {
-                    // You're requesting friendship
-                    resultUser.incoming.push(req.user.username);
-                } else if(user.outgoing.indexOf(req.user.username) > -1) {
-                    // They're requesting friendship
-                    resultUser.outgoing.push(req.user.username);
+                if(req.params.username == req.user.username) {
+                    // Want yourself, return everything!
+                    return res.json({user: user});
+                } else {
+                    // Mongoose may be protecting the resulting object
+                    // making it so that we can't delete properties
+                    // (even if we're not saving it back)
+                    // So we'll just construct a new object instead
+                    
+                    // Simplify the social arrays to only contain you
+                    // That way we can see your relation to this person
+                    var resultUser = {
+                        friends: [],
+                        incoming: [],
+                        outgoing: [],
+                        firstName: "",
+                        lastName: "",
+                        city: user.city,
+                        username: user.username,
+                        goalsCompleted: user.goalsCompleted,
+                        timesMotivated: user.timesMotivated
+                    };
+                    
+                    if(user.friends.indexOf(req.user.username) > -1) {
+                        // Friend
+                        resultUser.friends.push(req.user.username);
+                        resultUser.firstName = user.firstName;
+                        resultUser.lastName = user.lastName;
+                    } else if(user.incoming.indexOf(req.user.username) > -1) {
+                        // You're requesting friendship
+                        resultUser.incoming.push(req.user.username);
+                    } else if(user.outgoing.indexOf(req.user.username) > -1) {
+                        // They're requesting friendship
+                        resultUser.outgoing.push(req.user.username);
+                    }
+                    
+                    return res.json({user: resultUser});
                 }
-                
-                return res.json({user: resultUser});
             }
         }
     });
@@ -246,24 +279,10 @@ router.get('/search/:username', middle.verifyToken, function (req, res, next) {
  *      username : The target user's username
  *      token : Your personal access token
  * Returns:
- *      statusCode : No Content (204) if successful, Unauthorized (401),
- *                   Bad Request (400), or Not Found (404) on failure
+ *      statusCode : No Content (204) if successful, Bad Request (400) on failure
  */
-router.get('/request/:username', middle.verifyToken, function (req, res, next) {
-    // Find both users
-    UserModel.findOne({username: req.user.username}, function(err, you) {
-        if(err) {
-            errorHandler.logError(err, res);
-        } else {
-            UserModel.findOne({username: req.params.username}, function(err, them) {
-                if(err) {
-                    errorHandler.logError(err, res);
-                } else {
-                    foundBoth(you, them);
-                }
-            });
-        }
-    });
+router.post('/request/:username', middle.verifyToken, function (req, res, next) {
+    prepSocial(req, res, foundBoth);
     
     function foundBoth(you, them) {
         var yourUsername = you.username;
@@ -271,8 +290,6 @@ router.get('/request/:username', middle.verifyToken, function (req, res, next) {
         
         if(you.blocked.indexOf(theirUsername) > -1 || them.blocked.indexOf(yourUsername) > -1) {
             // Someone blocked someone
-            console.log(you.blocked);
-            console.log(them.blocked);
             errorHandler.targetUserNotFound(res);
         } else if (you.incoming.indexOf(theirUsername) > -1 || them.incoming.indexOf(yourUsername) > -1 ||
                    you.outgoing.indexOf(theirUsername) > -1 || them.outgoing.indexOf(yourUsername) > -1 ){
@@ -317,24 +334,10 @@ router.get('/request/:username', middle.verifyToken, function (req, res, next) {
  *      username : The target user's username
  *      token : Your personal access token
  * Returns:
- *      statusCode : No Content (204) if successful, Unauthorized (401),
- *                   Bad Request (400), or Not Found (404) on failure
+ *      statusCode : No Content (204) if successful, Bad Request (400) on failure
  */
-router.get('/accept/:username', middle.verifyToken, function (req, res, next) {
-    // Find both users
-    UserModel.findOne({username: req.user.username}, function(err, you) {
-        if(err) {
-            errorHandler.logError(err, res);
-        } else {
-            UserModel.findOne({username: req.params.username}, function(err, them) {
-                if(err) {
-                    errorHandler.logError(err, res);
-                } else {
-                    foundBoth(you, them);
-                }
-            });
-        }
-    });
+router.post('/accept/:username', middle.verifyToken, function (req, res, next) {
+    prepSocial(req, res, foundBoth);
     
     function foundBoth(you, them) {
         var yourUsername = you.username;
@@ -384,24 +387,10 @@ router.get('/accept/:username', middle.verifyToken, function (req, res, next) {
  *      username : The target user's username
  *      token : Your personal access token
  * Returns:
- *      statusCode : No Content (204) if successful, Unauthorized (401),
- *                   Bad Request (400), or Not Found (404) on failure
+ *      statusCode : No Content (204) if successful, Bad Request (400) on failure
  */
-router.get('/reject/:username', middle.verifyToken, function (req, res, next) {
-    // Find both users
-    UserModel.findOne({username: req.user.username}, function(err, you) {
-        if(err) {
-            errorHandler.logError(err, res);
-        } else {
-            UserModel.findOne({username: req.params.username}, function(err, them) {
-                if(err) {
-                    errorHandler.logError(err, res);
-                } else {
-                    foundBoth(you, them);
-                }
-            });
-        }
-    });
+router.post('/reject/:username', middle.verifyToken, function (req, res, next) {
+    prepSocial(req, res, foundBoth);
     
     function foundBoth(you, them) {
         var yourUsername = you.username;
@@ -443,79 +432,95 @@ router.get('/reject/:username', middle.verifyToken, function (req, res, next) {
 });
 
 /*
- * Get your friends list
+ * Cancel a request with another user
  * Parameters:
+ *      username : The target user's username
  *      token : Your personal access token
  * Returns:
- *      statusCode : Ok (200) if successful, Not Found (404) on failure
- *      JSONArray: An array of usernames of your friends
+ *      statusCode : No Content (204) if successful, Bad Request (400) on failure
  */
-router.get('/social/friends', middle.verifyToken, function (req, res, next) {
-    // Find both users
-    UserModel.findOne({username: req.user.username}, 'friends', function(err, user) {
-        if(err) {
-            errorHandler.logError(err, res);
-        } else if(!user) {
-            errorHandler.userNotFound(res);
+router.post('/cancel/:username', middle.verifyToken, function (req, res, next) {
+    prepSocial(req, res, foundBoth);
+    
+    function foundBoth(you, them) {
+        var yourUsername = you.username;
+        var theirUsername = them.username;
+        
+        if(you.outgoing.indexOf(theirUsername) > -1 &&
+           them.incoming.indexOf(yourUsername) > -1) {
+            // All good, proceed
+            
+            removeUsername(you.outgoing, theirUsername);
+            you.save(function(err) {
+                if(err) {
+                    errorHandler.logError(err, res);
+                } else {
+                    // Change the other user
+                    removeUsername(them.incoming, yourUsername);
+                    them.save(function (err) {
+                        if(err) {
+                            // Rollback your incoming list
+                            you.outgoing.push(theirUsername);
+                            you.save(function(yourErr) {
+                                if(yourErr) {
+                                    errorHandler.logError(yourErr, res);
+                                } else {
+                                    errorHandler.logError(err, res);
+                                }
+                            });
+                        } else {
+                            res.status(HttpStatus.NO_CONTENT);
+                            return res.send('');
+                        }
+                    });
+                }
+            });
         } else {
-            if(user.friends) {
-                return res.json(user.friends);
-            } else {
-                return res.json([]);
-            }
+            errorHandler.badRequest(res);
         }
-    });
+    }
 });
 
 /*
- * Get your pending requests list
+ * Block another user
  * Parameters:
+ *      username : The target user's username
  *      token : Your personal access token
  * Returns:
- *      statusCode : Ok (200) if successful, Not Found (404) on failure
- *      JSONArray: An array of usernames of people requesting friendship
- *                 with you
+ *      statusCode : No Content (204) if successful, Bad Request (400) on failure
  */
-router.get('/social/incoming', middle.verifyToken, function (req, res, next) {
-    // Find both users
-    UserModel.findOne({username: req.user.username}, 'incoming', function(err, user) {
-        if(err) {
-            errorHandler.logError(err, res);
-        } else if(!user) {
-            errorHandler.userNotFound(res);
+router.post('/block/:username', middle.verifyToken, function (req, res, next) {
+    prepSocial(req, res, foundBoth);
+    
+    function foundBoth(you, them) {
+        var yourUsername = you.username;
+        var theirUsername = them.username;
+        
+        if(you.blocked.indexOf(theirUsername) > -1 || them.blocked.indexOf(yourUsername) > -1) {
+            // Someone blocked someone
+            errorHandler.targetUserNotFound(res);
+        } else if (you.incoming.indexOf(theirUsername) > -1 || them.incoming.indexOf(yourUsername) > -1 ||
+                   you.outgoing.indexOf(theirUsername) > -1 || them.outgoing.indexOf(yourUsername) > -1 ){
+            // You can't request when a request is already in progress
+            errorHandler.relationFunctionInProgress(res);
+        } else if (you.friends.indexOf(theirUsername) > -1 || them.friends.indexOf(yourUsername) > -1 ){
+            // You can't request when you're already friends
+            errorHandler.relationFunctionInProgress(res);
         } else {
-            if(user.incoming) {
-                return res.json(user.incoming);
-            } else {
-                return res.json([]);
-            }
+            // Everything is fine, update and save
+            you.blocked.push(theirUsername);
+            you.save(function(err) {
+                if(err) {
+                    errorHandler.logError(err, res);
+                } else {
+                    // Don't need to modify the other user, we don't
+                    // want them to know anything happened
+                    res.status(HttpStatus.NO_CONTENT);
+                    return res.send('');
+                }
+            });
         }
-    });
-});
-
-/*
- * Get your friends list
- * Parameters:
- *      token : Your personal access token
- * Returns:
- *      statusCode : Ok (200) if successful, Not Found (404) on failure
- *      JSONArray: An array of usernames of people you have blocked
- */
-router.get('/social/blocked', middle.verifyToken, function (req, res, next) {
-    // Find both users
-    UserModel.findOne({username: req.user.username}, 'blocked', function(err, user) {
-        if(err) {
-            errorHandler.logError(err, res);
-        } else if(!user) {
-            errorHandler.userNotFound(res);
-        } else {
-            if(user.blocked) {
-                return res.json(user.blocked);
-            } else {
-                return res.json([]);
-            }
-        }
-    });
+    }
 });
 
 module.exports = router;

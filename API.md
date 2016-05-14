@@ -8,7 +8,9 @@ An error will contain a JSONObject with:
 
 Note: statusCode BAD_REQUEST (400) will be returned if some fields are missing. 
 statusCode UNAUTHORIZED(401) will be returned if a valid token is not passed 
-for functions that require one.
+for functions that require one. NOT_FOUND (404) will be returned if a user
+is requested, but does not exist, or the relationship between the user and
+the target is blocked.
 
 In very rare cases, statusCode INTERNAL_SERVER_ERROR (500) will be returned 
 in case the server is unable to process your request. In this case, please wait 
@@ -93,19 +95,19 @@ Note: the personal information is only used for visibility purposes, by no means
 you have to input real information if you are not comfortable doing so. Friends will 
 be able to search for you through username.
 
-View a user's profile
+Get a user's details
 -------------
 ``` GET /users/search/:username ```
 
 Parameters:
 
 * ``` token ``` : Your personal access token
-* ``` username ``` : The user's username who you want to see
+* ``` username ``` : (OPTIONAL) The user's username who you want to see,
+or blank if you want your own details
 
 Returns:
 
-* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
-or Not Found (404) on failure
+* ``` statusCode ``` : OK (200) if successful
 * ``` user ``` : A JSONObject containing the requested user's public information
 
 Request a friendship
@@ -118,8 +120,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : No Content (204) if successful, Unauthorized (401)
-or Not Found (404) on failure
+* ``` statusCode ``` : No Content (204) if successful, Bad Request (400) on failure
 
 Accept a friendship
 -------------
@@ -131,8 +132,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : No Content (204) if successful, Unauthorized (401)
-or Not Found (404) on failure
+* ``` statusCode ``` : No Content (204) if successful, Bad Request (400) on failure
 
 Reject a friendship
 -------------
@@ -144,8 +144,19 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : No Content (204) if successful, Unauthorized (401)
-or Not Found (404) on failure
+* ``` statusCode ``` : No Content (204) if successful, Bad Request (400) on failure
+
+Cancel a friendship request
+-------------
+``` POST /cancel/:username ```
+
+Parameters:
+
+* ``` token ``` : Your personal access token
+
+Returns:
+
+* ``` statusCode ``` : No Content (204) if successful, Bad Request (400) on failure
 
 Block a user
 -------------
@@ -159,46 +170,6 @@ Returns:
 
 * ``` statusCode ``` : No Content (204) if successful, Unauthorized (401)
 or Not Found (404) on failure
-
-Get your friends list
--------------
-``` GET /social/friends ```
-
-Parameters:
-
-* ``` token ``` : Your personal access token
-
-Returns:
-
-* ``` statusCode ``` : OK (200) if successful,  Not Found (404) on failure
-* ``` JSONArray ``` : An array of usernames of your friends
-
-Get your pending requests list
--------------
-``` GET /social/pending ```
-
-Parameters:
-
-* ``` token ``` : Your personal access token
-
-Returns:
-
-* ``` statusCode ``` : OK (200) if successful,  Not Found (404) on failure
-* ``` JSONArray ``` : An array of usernames of people requesting friendship
-with you
-
-Get your blocked list
--------------
-``` GET /social/blocked ```
-
-Parameters:
-
-* ``` token ``` : Your personal access token
-
-Returns:
-
-* ``` statusCode ``` : OK (200) if successful,  Not Found (404) on failure
-* ``` JSONArray ``` : An array of usernames of people you have blocked
 
 Goal
 =============
