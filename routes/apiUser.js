@@ -214,7 +214,7 @@ router.post('/', function (req, res, next) {
  *      statusCode : OK (200) if successful
  *      user : A JSONObject representing the user's available details
  */
-router.get('/search/:username', middle.verifyToken, function (req, res, next) {
+router.get('/search/:username?', middle.verifyToken, function (req, res, next) {
     // Set the username match to someone else, or yourself
     var userMatchObject = {
         username : req.params.username ? req.params.username : req.user.username
@@ -230,7 +230,7 @@ router.get('/search/:username', middle.verifyToken, function (req, res, next) {
             if(!user || user.blocked.indexOf(req.user.username) > -1) {
                 errorHandler.userNotFound(res);
             } else {
-                if(req.params.username == req.user.username) {
+                if(!req.params.username || req.params.username == req.user.username) {
                     // Want yourself, return everything!
                     return res.json({user: user});
                 } else {
@@ -281,7 +281,7 @@ router.get('/search/:username', middle.verifyToken, function (req, res, next) {
  * Returns:
  *      statusCode : No Content (204) if successful, Bad Request (400) on failure
  */
-router.post('/request/:username', middle.verifyToken, function (req, res, next) {
+router.post('/request/:username?', middle.verifyToken, function (req, res, next) {
     prepSocial(req, res, foundBoth);
     
     function foundBoth(you, them) {
@@ -336,7 +336,7 @@ router.post('/request/:username', middle.verifyToken, function (req, res, next) 
  * Returns:
  *      statusCode : No Content (204) if successful, Bad Request (400) on failure
  */
-router.post('/accept/:username', middle.verifyToken, function (req, res, next) {
+router.post('/accept/:username?', middle.verifyToken, function (req, res, next) {
     prepSocial(req, res, foundBoth);
     
     function foundBoth(you, them) {
@@ -389,7 +389,7 @@ router.post('/accept/:username', middle.verifyToken, function (req, res, next) {
  * Returns:
  *      statusCode : No Content (204) if successful, Bad Request (400) on failure
  */
-router.post('/reject/:username', middle.verifyToken, function (req, res, next) {
+router.post('/reject/:username?', middle.verifyToken, function (req, res, next) {
     prepSocial(req, res, foundBoth);
     
     function foundBoth(you, them) {
@@ -439,7 +439,7 @@ router.post('/reject/:username', middle.verifyToken, function (req, res, next) {
  * Returns:
  *      statusCode : No Content (204) if successful, Bad Request (400) on failure
  */
-router.post('/cancel/:username', middle.verifyToken, function (req, res, next) {
+router.post('/cancel/:username?', middle.verifyToken, function (req, res, next) {
     prepSocial(req, res, foundBoth);
     
     function foundBoth(you, them) {
@@ -489,7 +489,7 @@ router.post('/cancel/:username', middle.verifyToken, function (req, res, next) {
  * Returns:
  *      statusCode : No Content (204) if successful, Bad Request (400) on failure
  */
-router.post('/block/:username', middle.verifyToken, function (req, res, next) {
+router.post('/block/:username?', middle.verifyToken, function (req, res, next) {
     prepSocial(req, res, foundBoth);
     
     function foundBoth(you, them) {
