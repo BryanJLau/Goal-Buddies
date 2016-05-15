@@ -64,6 +64,12 @@ var UserSchema = new mongoose.Schema( {
         type: Number,
         default: 0
     },
+    
+    lastMotivated: {
+        type: Date,
+        default: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime(),
+    },
+    motivators: [ String ],
 	
 	// Hold the usernames of relationships
 	friends: [ String ],

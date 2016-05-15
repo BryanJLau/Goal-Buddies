@@ -272,7 +272,7 @@ Returns:
 
 Motivate a goal
 -------------
-``` POST /goals/:username/:id/motivate ```
+``` POST /goals/:id/motivate ```
 
 Parameters:
 
@@ -280,8 +280,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : No Content (204) if successful, Unauthorized (401)
-or Not Found (404) on failure
+* ``` statusCode ``` : No Content (204) if successful, Unauthorized (401) on failure
 
 Delete a goal
 -------------

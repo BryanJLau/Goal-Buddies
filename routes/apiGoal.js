@@ -89,8 +89,6 @@ router.get('/list/:username?', middle.verifyToken, middle.cleanBody, function (r
                     goalQuery = goalQuery.skip(parseInt(req.query.offset) || 0)
                 }
                 
-                console.log(matchObject);
-                
                 goalQuery.exec(foundGoals);
             }
         }
@@ -457,11 +455,104 @@ router.post('/:id/finish', middle.verifyToken, function (req, res, next) {
  * Parameters:
  *      token : Your personal access token
  * Returns:
- *      statusCode : OK (200) if successful, Unauthorized (401)
- *                   or Not Found (404) on failure
+ *      statusCode : No Content (204) if successful, Unauthorized (401) on failure
  */
-router.post('/:username/:id/motivate', middle.verifyToken, function (req, res, next) {
-    return res.send("Function not implemented yet.");
+router.post('/:id/motivate', middle.verifyToken, function (req, res, next) {
+    //return res.send("Function not implemented yet.");
+    /*
+     * The general flow of the function is as follows:
+     * 1. Find the goal
+     * 2. Find and update the user that owns the goal
+     * 3. Update the goal (increment and mark as unread)
+     * 4. Rollback if necessary
+     */
+    
+    GoalModel.findById(req.params.id, findingGoal);
+    var goal = null;
+    var user = null;
+    var oldDate = null;
+    var oldMotivators = [];
+    var version = -1;
+    
+    // 1. Find the goal
+    function findingGoal(err, foundGoal) {
+        if (err) {
+            errorHandler.logError(err, res);
+        }
+        else if (!foundGoal) {
+            errorHandler.goalNotFound(res);
+        }
+        else {
+            goal = foundGoal;
+            UserModel.findById(foundGoal.userId, findingUser);
+        }
+    }
+    
+    // 2. Find and update the user that owns the goal
+    function findingUser(err, foundUser) {
+        if(err) {
+            errorHandler.logError(err, res);
+        } else if (!foundUser) {
+            errorHandler.targetUserNotFound(res);
+        } else if (foundUser.friends.indexOf(req.user._id) == -1) {
+            errorHandler.targetUserNotFriend(res);
+        } else {
+            user = foundUser;
+            
+            // Check if already motivated today
+            var today = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime();
+            if (user.lastMotivated == today && user.motivators.indexOf(req.user.username) > -1) {
+                errorHandler.alreadyMotivatedToday(res);
+            } else {
+                // Copy in case of rollback
+                for(var i = 0; i < user.motivators; i++) {
+                    oldMotivators.push(user.motivators[i]);
+                }
+                oldDate = user.lastMotivated;
+                
+                if(user.lastMotivated < today) {
+                    // It's a new day! Clear everyone out
+                    user.motivators.length = 0;
+                }
+                
+                user.timesMotivated++;
+                user.version++;
+                user.lastMotivated = today;
+                user.motivators.push(req.user.username);
+                
+                foundUser.save(savingUser);
+            }
+        }
+    }
+    
+    // 3. Update the goal (increment and mark as unread)
+    function savingUser(err) {
+        if(err) {
+            errorHandler.logError(err, res);
+        } else {
+            goal.version = version;
+            goal.times++;
+            goal.unread = true;
+            goal.save(savingGoal);
+        }
+    }
+    
+    // 4. Rollback if necessary
+    function savingGoal(err) {
+        if(err) {
+            errorHandler(err, res);
+            
+            user.timesMotivated--;
+            user.lastMotivated = oldDate;
+            user.motivators = oldMotivators;
+            
+            user.save();
+        } else {
+            // Save successful
+            res.status(HttpStatus.NO_CONTENT);
+            return res.send('');
+        }
+    }
 });
 
 /*
@@ -484,7 +575,9 @@ router.post('/:id/delete', middle.verifyToken, function (req, res, next) {
     
     // 2. Check the goal and remove it
     function findingGoal(err, goal) {
-        if (!goal || goal.userId != req.user._id) {
+        if (err) {
+            errorHandler.logError(err);
+        } else if (!goal || goal.userId != req.user._id) {
             // Either the goal wasn't found, or it wasn't the user's
             errorHandler.goalNotFound(res);
         }
