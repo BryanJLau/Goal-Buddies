@@ -175,12 +175,15 @@ Goal
 =============
 Get a user's list of goals
 -------------
-``` GET /goals/list ```
+``` GET /goals/list/:username ```
 
 Parameters:
 
 * ``` token ``` : Your personal access token
 * ``` username ``` : (OPTIONAL) The requested user's username
+
+If the username is not provided, then the following parameters are as follows:
+
 * ``` version ``` : Get all goals with version > this parameter (default: 0)
 * ``` offset ``` : Output goals starting at offset (default: 0)
 * ``` limit ``` : Return up to this many goals (default: 10)
@@ -190,10 +193,16 @@ Parameters:
 * ``` all ``` : True to return all goals associated with the user 
 (all other parameters are ignored, only use in external applications) (default: false)
 
+If the username is provided, then the following parameters are as follows:
+
+* ``` type ``` : The type of goals (recurring: 0, one-time: 1) (NOT OPTIONAL)
+
+The limit and pending will be set to ``` 10 ``` and ``` true ``` respectively
+for privacy reasons.
+
 Returns:
 
-* ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
-or Not Found (404) on failure
+* ``` statusCode ``` : OK (200) if successful
 * ``` goals ``` : A JSONArray with goals
 * ``` totalGoals ``` : The total number of goals the user has (for pagination)
 * ``` maxVersion ``` : (Only returned with the 'all' parameter set to true) 
