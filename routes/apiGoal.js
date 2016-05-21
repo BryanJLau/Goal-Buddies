@@ -13,14 +13,14 @@ var GoalModel = require('../models/goalModel');
 
 router.get('/list/:username?', middle.verifyToken, middle.cleanBody, function (req, res, next) {
     // Only do something if you're friends with the target
-    if(req.params.username) {
+    if(req.params.username && req.params.username != req.user.username) {
         UserModel.findOne({username: req.params.username}, function(err, user) {
             if(err) {
                 errorHandler.logError(err, res);
             } else if(!user || user.blocked.indexOf(req.user.username) > -1) {
                 errorHandler.targetUserNotFound(res);
             } else {
-                if(user.friends.indexOf(req.params.username) > -1) {
+                if(user.friends.indexOf(req.user.username) > -1) {
                     // You're actually friends, proceed
                     getGoalList(user._id);
                 } else {

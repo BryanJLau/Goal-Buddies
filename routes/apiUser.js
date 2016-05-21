@@ -336,7 +336,7 @@ router.post('/request/:username?', middle.verifyToken, function (req, res, next)
  * Returns:
  *      statusCode : No Content (204) if successful, Bad Request (400) on failure
  */
-router.post('/accept/:username?', middle.verifyToken, function (req, res, next) {
+router.post('/social/accept/:username?', middle.verifyToken, function (req, res, next) {
     prepSocial(req, res, foundBoth);
     
     function foundBoth(you, them) {
@@ -389,7 +389,7 @@ router.post('/accept/:username?', middle.verifyToken, function (req, res, next) 
  * Returns:
  *      statusCode : No Content (204) if successful, Bad Request (400) on failure
  */
-router.post('/reject/:username?', middle.verifyToken, function (req, res, next) {
+router.post('/social/reject/:username?', middle.verifyToken, function (req, res, next) {
     prepSocial(req, res, foundBoth);
     
     function foundBoth(you, them) {
@@ -439,7 +439,7 @@ router.post('/reject/:username?', middle.verifyToken, function (req, res, next) 
  * Returns:
  *      statusCode : No Content (204) if successful, Bad Request (400) on failure
  */
-router.post('/cancel/:username?', middle.verifyToken, function (req, res, next) {
+router.post('/social/cancel/:username?', middle.verifyToken, function (req, res, next) {
     prepSocial(req, res, foundBoth);
     
     function foundBoth(you, them) {
@@ -489,7 +489,7 @@ router.post('/cancel/:username?', middle.verifyToken, function (req, res, next) 
  * Returns:
  *      statusCode : No Content (204) if successful, Bad Request (400) on failure
  */
-router.post('/block/:username?', middle.verifyToken, function (req, res, next) {
+router.post('/social/block/:username?', middle.verifyToken, function (req, res, next) {
     prepSocial(req, res, foundBoth);
     
     function foundBoth(you, them) {
