@@ -281,7 +281,7 @@ router.get('/search/:username?', middle.verifyToken, function (req, res, next) {
  * Returns:
  *      statusCode : No Content (204) if successful, Bad Request (400) on failure
  */
-router.post('/request/:username?', middle.verifyToken, function (req, res, next) {
+router.post('/social/request/:username?', middle.verifyToken, function (req, res, next) {
     prepSocial(req, res, foundBoth);
     
     function foundBoth(you, them) {
@@ -376,7 +376,7 @@ router.post('/social/accept/:username?', middle.verifyToken, function (req, res,
                 }
             });
         } else {
-            errorHandler.badRequest(res);
+            errorHandler.relationFunctionInProgress(res);
         }
     }
 });
@@ -426,7 +426,7 @@ router.post('/social/reject/:username?', middle.verifyToken, function (req, res,
                 }
             });
         } else {
-            errorHandler.badRequest(res);
+            errorHandler.relationFunctionInProgress(res);
         }
     }
 });
@@ -476,7 +476,7 @@ router.post('/social/cancel/:username?', middle.verifyToken, function (req, res,
                 }
             });
         } else {
-            errorHandler.badRequest(res);
+            errorHandler.relationFunctionInProgress(res);
         }
     }
 });
@@ -519,6 +519,56 @@ router.post('/social/block/:username?', middle.verifyToken, function (req, res, 
                     return res.send('');
                 }
             });
+        }
+    }
+});
+
+/*
+ * Unfriend a user
+ * Parameters:
+ *      username : The target user's username
+ *      token : Your personal access token
+ * Returns:
+ *      statusCode : No Content (204) if successful, Bad Request (400) on failure
+ */
+router.post('/social/unfriend/:username?', middle.verifyToken, function (req, res, next) {
+    prepSocial(req, res, foundBoth);
+    
+    function foundBoth(you, them) {
+        var yourUsername = you.username;
+        var theirUsername = them.username;
+        
+        if(you.friends.indexOf(theirUsername) > -1 &&
+           them.friends.indexOf(yourUsername) > -1) {
+            // All good, proceed
+            
+            removeUsername(you.friends, theirUsername);
+            you.save(function(err) {
+                if(err) {
+                    errorHandler.logError(err, res);
+                } else {
+                    // Change the other user
+                    removeUsername(them.friends, yourUsername);
+                    them.save(function (err) {
+                        if(err) {
+                            // Rollback your incoming list
+                            you.friends.push(theirUsername);
+                            you.save(function(yourErr) {
+                                if(yourErr) {
+                                    errorHandler.logError(yourErr, res);
+                                } else {
+                                    errorHandler.logError(err, res);
+                                }
+                            });
+                        } else {
+                            res.status(HttpStatus.NO_CONTENT);
+                            return res.send('');
+                        }
+                    });
+                }
+            });
+        } else {
+            errorHandler.relationFunctionInProgress(res);
         }
     }
 });

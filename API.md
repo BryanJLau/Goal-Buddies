@@ -112,7 +112,7 @@ Returns:
 
 Request a friendship
 -------------
-``` POST /request/:username ```
+``` POST /users/social/request/:username ```
 
 Parameters:
 
@@ -124,7 +124,7 @@ Returns:
 
 Accept a friendship
 -------------
-``` POST /accept/:username ```
+``` POST /users/social/accept/:username ```
 
 Parameters:
 
@@ -136,7 +136,7 @@ Returns:
 
 Reject a friendship
 -------------
-``` POST /reject/:username ```
+``` POST /users/social/reject/:username ```
 
 Parameters:
 
@@ -148,7 +148,7 @@ Returns:
 
 Cancel a friendship request
 -------------
-``` POST /cancel/:username ```
+``` POST /users/social/cancel/:username ```
 
 Parameters:
 
@@ -160,7 +160,7 @@ Returns:
 
 Block a user
 -------------
-``` POST /block/:username ```
+``` POST /users/social/block/:username ```
 
 Parameters:
 
@@ -168,8 +168,19 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : No Content (204) if successful, Unauthorized (401)
-or Not Found (404) on failure
+* ``` statusCode ``` : No Content (204) if successful, Bad Request (400) on failure
+
+Unfriend a user
+-------------
+``` POST /users/social/unfriend/:username ```
+
+Parameters:
+
+* ``` token ``` : Your personal access token
+
+Returns:
+
+* ``` statusCode ``` : No Content (204) if successful, Bad Request (400) on failure
 
 Goal
 =============
