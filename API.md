@@ -21,6 +21,11 @@ encountering the error.
 Successful operations will not explicitly return a ``` statusCode ``` member 
 in the JSON response, but will be set in the header.
 
+Some operations (such as the relationship ones) should return a NO_CONTENT (204)
+status code with an empty body. However, due to Android Volley issues, an empty
+body is caught by the error listener. Because of this, these functions now return
+an OK (200) status code and an empty object ({}) as the response.
+
 All responses should be wrapped in a JSON wrapper for extensibility in 
 the future.
 
@@ -120,7 +125,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : No Content (204) if successful, Bad Request (400) on failure
+* ``` statusCode ``` : OK (200) if successful, Bad Request (400) on failure
 
 Accept a friendship
 -------------
@@ -132,7 +137,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : No Content (204) if successful, Bad Request (400) on failure
+* ``` statusCode ``` : OK (200) if successful, Bad Request (400) on failure
 
 Reject a friendship
 -------------
@@ -144,7 +149,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : No Content (204) if successful, Bad Request (400) on failure
+* ``` statusCode ``` : OK (200) if successful, Bad Request (400) on failure
 
 Cancel a friendship request
 -------------
@@ -156,7 +161,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : No Content (204) if successful, Bad Request (400) on failure
+* ``` statusCode ``` : OK (200) if successful, Bad Request (400) on failure
 
 Block a user
 -------------
@@ -168,7 +173,7 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : No Content (204) if successful, Bad Request (400) on failure
+* ``` statusCode ``` : OK (200) if successful, Bad Request (400) on failure
 
 Unfriend a user
 -------------
@@ -180,7 +185,19 @@ Parameters:
 
 Returns:
 
-* ``` statusCode ``` : No Content (204) if successful, Bad Request (400) on failure
+* ``` statusCode ``` : OK (200) if successful, Bad Request (400) on failure
+
+Unblock a user
+-------------
+``` POST /users/social/unblock/:username ```
+
+Parameters:
+
+* ``` token ``` : Your personal access token
+
+Returns:
+
+* ``` statusCode ``` : OK (200) if successful, Bad Request (400) on failure
 
 Goal
 =============

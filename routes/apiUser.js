@@ -279,7 +279,7 @@ router.get('/search/:username?', middle.verifyToken, function (req, res, next) {
  *      username : The target user's username
  *      token : Your personal access token
  * Returns:
- *      statusCode : No Content (204) if successful, Bad Request (400) on failure
+ *      statusCode : OK (200) if successful, Bad Request (400) on failure
  */
 router.post('/social/request/:username?', middle.verifyToken, function (req, res, next) {
     prepSocial(req, res, foundBoth);
@@ -318,8 +318,7 @@ router.post('/social/request/:username?', middle.verifyToken, function (req, res
                                 }
                             });
                         } else {
-                            res.status(HttpStatus.NO_CONTENT);
-                            return res.send('');
+                            return res.send({});
                         }
                     });
                 }
@@ -334,7 +333,7 @@ router.post('/social/request/:username?', middle.verifyToken, function (req, res
  *      username : The target user's username
  *      token : Your personal access token
  * Returns:
- *      statusCode : No Content (204) if successful, Bad Request (400) on failure
+ *      statusCode : OK (200) if successful, Bad Request (400) on failure
  */
 router.post('/social/accept/:username?', middle.verifyToken, function (req, res, next) {
     prepSocial(req, res, foundBoth);
@@ -369,8 +368,7 @@ router.post('/social/accept/:username?', middle.verifyToken, function (req, res,
                                 }
                             });
                         } else {
-                            res.status(HttpStatus.NO_CONTENT);
-                            return res.send('');
+                            return res.send({});
                         }
                     });
                 }
@@ -387,7 +385,7 @@ router.post('/social/accept/:username?', middle.verifyToken, function (req, res,
  *      username : The target user's username
  *      token : Your personal access token
  * Returns:
- *      statusCode : No Content (204) if successful, Bad Request (400) on failure
+ *      statusCode : OK (200) if successful, Bad Request (400) on failure
  */
 router.post('/social/reject/:username?', middle.verifyToken, function (req, res, next) {
     prepSocial(req, res, foundBoth);
@@ -419,8 +417,7 @@ router.post('/social/reject/:username?', middle.verifyToken, function (req, res,
                                 }
                             });
                         } else {
-                            res.status(HttpStatus.NO_CONTENT);
-                            return res.send('');
+                            return res.send({});
                         }
                     });
                 }
@@ -437,7 +434,7 @@ router.post('/social/reject/:username?', middle.verifyToken, function (req, res,
  *      username : The target user's username
  *      token : Your personal access token
  * Returns:
- *      statusCode : No Content (204) if successful, Bad Request (400) on failure
+ *      statusCode : OK (200) if successful, Bad Request (400) on failure
  */
 router.post('/social/cancel/:username?', middle.verifyToken, function (req, res, next) {
     prepSocial(req, res, foundBoth);
@@ -469,8 +466,7 @@ router.post('/social/cancel/:username?', middle.verifyToken, function (req, res,
                                 }
                             });
                         } else {
-                            res.status(HttpStatus.NO_CONTENT);
-                            return res.send('');
+                            return res.send({});
                         }
                     });
                 }
@@ -487,7 +483,7 @@ router.post('/social/cancel/:username?', middle.verifyToken, function (req, res,
  *      username : The target user's username
  *      token : Your personal access token
  * Returns:
- *      statusCode : No Content (204) if successful, Bad Request (400) on failure
+ *      statusCode : OK (200) if successful, Bad Request (400) on failure
  */
 router.post('/social/block/:username?', middle.verifyToken, function (req, res, next) {
     prepSocial(req, res, foundBoth);
@@ -515,8 +511,7 @@ router.post('/social/block/:username?', middle.verifyToken, function (req, res, 
                 } else {
                     // Don't need to modify the other user, we don't
                     // want them to know anything happened
-                    res.status(HttpStatus.NO_CONTENT);
-                    return res.send('');
+                    return res.send({});
                 }
             });
         }
@@ -529,7 +524,7 @@ router.post('/social/block/:username?', middle.verifyToken, function (req, res, 
  *      username : The target user's username
  *      token : Your personal access token
  * Returns:
- *      statusCode : No Content (204) if successful, Bad Request (400) on failure
+ *      statusCode : OK (200) if successful, Bad Request (400) on failure
  */
 router.post('/social/unfriend/:username?', middle.verifyToken, function (req, res, next) {
     prepSocial(req, res, foundBoth);
@@ -561,10 +556,43 @@ router.post('/social/unfriend/:username?', middle.verifyToken, function (req, re
                                 }
                             });
                         } else {
-                            res.status(HttpStatus.NO_CONTENT);
-                            return res.send('');
+                            return res.send({});
                         }
                     });
+                }
+            });
+        } else {
+            errorHandler.relationFunctionInProgress(res);
+        }
+    }
+});
+
+
+
+/*
+ * Unblock a user
+ * Parameters:
+ *      username : The target user's username
+ *      token : Your personal access token
+ * Returns:
+ *      statusCode : OK (200) if successful, Bad Request (400) on failure
+ */
+router.post('/social/unblock/:username?', middle.verifyToken, function (req, res, next) {
+    prepSocial(req, res, foundBoth);
+    
+    function foundBoth(you, them) {
+        var yourUsername = you.username;
+        var theirUsername = them.username;
+        
+        if(you.blocked.indexOf(theirUsername) > -1) {
+            // All good, proceed
+            
+            removeUsername(you.blocked, theirUsername);
+            you.save(function(err) {
+                if(err) {
+                    errorHandler.logError(err, res);
+                } else {
+                    return res.send({});
                 }
             });
         } else {
