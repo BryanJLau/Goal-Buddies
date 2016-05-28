@@ -34,10 +34,14 @@ function prepSocial(req, res, callback) {
         UserModel.findOne({username: req.user.username}, function(err, you) {
             if(err) {
                 errorHandler.logError(err, res);
+            } else if (!you) {
+                errorHandler.userNotFound(res);
             } else {
                 UserModel.findOne({username: req.params.username}, function(err, them) {
                     if(err) {
                         errorHandler.logError(err, res);
+                    } else if (!them) {
+                        errorHandler.targetUserNotFound(res);
                     } else {
                         callback(you, them);
                     }
@@ -234,6 +238,12 @@ router.get('/search/:username?', middle.verifyToken, function (req, res, next) {
                     // Want yourself, return everything!
                     return res.json({user: user});
                 } else {
+                    var today = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime();
+                    if (user.lastMotivated < today) {
+                        user.motivators.length = 0;
+                        user.save();
+                    }
+                    
                     // Mongoose may be protecting the resulting object
                     // making it so that we can't delete properties
                     // (even if we're not saving it back)
