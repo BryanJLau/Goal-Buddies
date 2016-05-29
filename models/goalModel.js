@@ -1,11 +1,9 @@
 ﻿var mongoose = require('mongoose');
 
+var d = new Date();
+
 // Define our Goal schema
 var GoalSchema = new mongoose.Schema({
-    userId: {
-        type: String,
-        required: true
-    },
     description: {
         type: String,
         required: [
@@ -40,10 +38,6 @@ var GoalSchema = new mongoose.Schema({
         // Acts as both an ETA and actual finish date
         finished: {
             type : Date,
-            required: [
-                true,
-                "The field '{PATH}' is required."
-            ],
             default : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime() + 86400000
         },
         lastMotivated: {
@@ -55,10 +49,6 @@ var GoalSchema = new mongoose.Schema({
     times: {
         type: Number,
         default: 0
-    },
-    version: {
-        type: Number,
-        default: 1
     }
 });
 

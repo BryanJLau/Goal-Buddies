@@ -144,9 +144,18 @@ router.post('/', function (req, res, next) {
         var newUser = new UserModel();
         newUser.username = username;
         newUser.password = bcrypt.hashSync(password);
-        newUser.firstName = firstName;
-        newUser.lastName = lastName;
-        newUser.city = city;
+        newUser.personal.firstName = firstName;
+        newUser.personal.lastName = lastName;
+        newUser.personal.city = city;
+        
+        var newGoal = new GoalModel();
+        newGoal.description = "Create a goal and get at it using Goal Buddies!";
+        newGoal.type = 1;
+        newGoal.pending = true;
+
+console.log(newUser);
+        
+        newUser.goals.pendingOneTime.unshift(newGoal);
 
         newUser.save(function (err) {
             if (err) {
@@ -164,46 +173,33 @@ router.post('/', function (req, res, next) {
                     );
                 }
                 else {
+                    console.log(err.message);
                     // Something weird happened
                     errorHandler.logError(err, res);
                 }
             }
             
             else {
-                var newGoal = new GoalModel();
-                newGoal.userId = newUser._id;
-                newGoal.description = "Create a goal and get at it using Goal Buddies!";
-                newGoal.type = 1;
-                
-                newGoal.save(function (gerr) {
-                    console.log(gerr);
-                    if (!gerr) {
-                        var trimmedUser = {
-                            _id : newUser._id,
-                            username : username
-                        };
-                        // Success
-                        console.log("Successfully registered user: " + username + ".");
-                        res.status(HttpStatus.CREATED);
-                        return res.json(
-                            {
-                                token : jwt.sign(
-                                    trimmedUser,
-                                    config.tokenSecret,
-                                    { expiresInMinutes: 1440 * 30 }  // expires in 1 month
-                                ),
-                                // This is used in any apps that need to save the credentials
-                                // such as the Android app
-                                user : trimmedUser,
-                                expires : new Date().getTime() + 30 * 24 * 3600000   // Send expiration time as well
-                            }
-                        );
+                var trimmedUser = {
+                    _id : newUser._id,
+                    username : username
+                };
+                // Success
+                console.log("Successfully registered user: " + username + ".");
+                res.status(HttpStatus.CREATED);
+                return res.json(
+                    {
+                        token : jwt.sign(
+                            trimmedUser,
+                            config.tokenSecret,
+                            { expiresIn: 2629800 }  // expires in 1 month
+                        ),
+                        // This is used in any apps that need to save the credentials
+                        // such as the Android app
+                        user : trimmedUser,
+                        expires : new Date().getTime() + 30 * 24 * 3600000   // Send expiration time as well
                     }
-                    else {
-                        // Something weird happened
-                        errorHandler.logError(err, res);
-                    }
-                });
+                );
             }
         });
     }
