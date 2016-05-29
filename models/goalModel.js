@@ -1,7 +1,5 @@
 ﻿var mongoose = require('mongoose');
 
-var d = new Date();
-
 // Define our Goal schema
 var GoalSchema = new mongoose.Schema({
     userId: {
@@ -28,28 +26,32 @@ var GoalSchema = new mongoose.Schema({
     },
     pending: {
         type : Boolean,
-        default : true
-    },
-    unread: {
-        type : Boolean,
-        default : false
-    },
-    created: {
-        type : Date,
-        default : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime()
-    },
-    eta: {
-        type : Date,
-        required: [
+        required : [
             true,
             "The field '{PATH}' is required."
-        ],
-        default : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime() + 86400000
+        ]
     },
-    finished: {
-        type : Date,
-        default : null
+    
+    dates: {
+        created: {
+            type : Date,
+            default : Date.now
+        },
+        // Acts as both an ETA and actual finish date
+        finished: {
+            type : Date,
+            required: [
+                true,
+                "The field '{PATH}' is required."
+            ],
+            default : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime() + 86400000
+        },
+        lastMotivated: {
+            type : Date,
+            default : null
+        },
     },
+    
     times: {
         type: Number,
         default: 0
@@ -59,9 +61,6 @@ var GoalSchema = new mongoose.Schema({
         default: 1
     }
 });
-
-// Ascending ETA for earliest first
-GoalSchema.index({ description: "text", eta: 1 });
 
 // Export the Mongoose model
 module.exports = mongoose.model('Goal', GoalSchema);

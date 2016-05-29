@@ -1,6 +1,5 @@
 ﻿var mongoose = require('mongoose');
-//var GoalModel = require('./goalModel');
-//var bcrypt = require('bcrypt-nodejs');
+var GoalModel = require('./goalModel');
 
 var d = new Date();
 
@@ -21,85 +20,105 @@ var UserSchema = new mongoose.Schema( {
             "The field '{PATH}' is required."
         ]
     },
-    firstName: {
-        type: String,
-        required: [
-            true,
-            "The field '{PATH}' is required."
-        ]
-    },
-    lastName: {
-        type: String,
-        required: [
-            true,
-            "The field '{PATH}' is required."
-        ]
-    },
-    city: {
-        type: String,
-        required: [
-            true,
-            "The field '{PATH}' is required."
-        ]
+    
+    personal: {
+        firstName: {
+            type: String,
+            required: [
+                true,
+                "The field '{PATH}' is required."
+            ]
+        },
+        lastName: {
+            type: String,
+            required: [
+                true,
+                "The field '{PATH}' is required."
+            ]
+        },
+        city: {
+            type: String,
+            required: [
+                true,
+                "The field '{PATH}' is required."
+            ]
+        },
+        dateCreated: {
+            type: Date,
+            default: Date.now
+        }
+    },    
+    
+    statistics: {
+        motivationsReceived: {
+            type: Number,
+            default: 0
+        },
+        motivationsGiven: {
+            type: Number,
+            default: 0
+        },
+        daysSaved: {
+            type: Number,
+            default: 0
+        },
+        
+        totalGoals: {
+            type: Number,
+            default: 0
+        },
+        goalsCompleted: {
+            type: Number,
+            default: 0
+        }
     },
     
-    // The following fields are automatically generated
-    dateCreated: {
-        type: Date,
-        default: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime(),
-    },
-    premium: {
-        type: Boolean,
-        default: false
-    },
-    goalsCompleted: {
-        type: Number,
-        default: 0
-    },
-    totalGoals: {
-        type: Number,
-        default: 0
-    },
-    timesMotivated: {
+    premiumTier: {
         type: Number,
         default: 0
     },
     
-    lastMotivated: {
-        type: Date,
-        default: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime(),
-    },
-    motivators: [ String ],
-	
-	// Hold the usernames of relationships
-	friends: [ String ],
-	incoming: [ String ],
-	outgoing: [ String ],
-	blocked: [ String ],
+    notifications: [
+        {
+            notification: String,
+            date: {
+                type: Date,
+                default: Date.now
+            }
+        }
+    ],
     
-    // NOT going to embed goals, never need to join, need to text search
-    // Text search will return the entire user if it contains a goal
-    // with the specified text, no way to aggregate to return only goals
-    // with the search query.
-    //goals: [ GoalModel.schema ],
-    version: {
-        type: Number,
-        default: 0
+    motivation: {
+        lastMotivated: {
+            type: Date,
+            default: null
+        },
+        motivators: [ String ],
+    },
+    
+	relationships: {
+        // Hold the usernames of relationships
+        friends: [ String ],
+        incoming: [ String ],
+        outgoing: [ String ],
+        blocking: [ String ]
+    },
+    
+    // Embedding goals now, since we have a limit on the arrays
+    // This should help ease computing and allow the client to do
+    // more work, while still given all the data
+    goals: {
+        // Actual goals
+        pendingRecurring: [ GoalModel.schema ],
+        pendingOneTime: [ GoalModel.schema ],
+        finishedRecurring: [ GoalModel.schema ],
+        finishedOneTime: [ GoalModel.schema ],
+        major: [ GoalModel.schema ]
     },
 });
 
 // Create an index on username
 UserSchema.index({ username: 1 });
-
-// Compare passwords
-/*
-UserSchema.methods.verifyPassword = function (password, cb) {
-    bcrypt.compare(password, this.password, function (err, isMatch) {
-        if (err) return cb(err);
-        cb(null, isMatch);
-    });
-};
- * */
 
 // Export the Mongoose model
 module.exports = mongoose.model('User', UserSchema);
