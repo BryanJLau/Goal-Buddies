@@ -14,8 +14,7 @@
             200: function (data, textStatus, jqXHR) {
                 // Created (token)
                 sessionStorage.setItem("token", data.token);
-                sessionStorage.setItem("username", data.user.username);
-                sessionStorage.setItem("tokenExpiry", data.expires);
+                sessionStorage.setItem("username", $('#username').val());
                 window.location.replace("/goals");
             }
         }

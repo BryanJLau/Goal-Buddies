@@ -66,7 +66,6 @@ $(document).ready(function() {
 		    },
 			city: {
 			    required: "Please enter your city.",
-			    lettersonly: "Please input letters only."
 		    },
 			username: {
 				required: "Please enter a username.",
@@ -107,8 +106,7 @@ $(document).ready(function() {
 	        201: function (data, textStatus, jqXHR) {
 	            // Created (token)
 	            sessionStorage.setItem("token", data.token);
-	            sessionStorage.setItem("username", data.user.username);
-	            sessionStorage.setItem("tokenExpiry", data.expires);
+	            sessionStorage.setItem("username", $('#username').val());
 	            window.location.replace("/goals");
 	        }
 	    }

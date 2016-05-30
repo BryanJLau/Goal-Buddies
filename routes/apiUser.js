@@ -60,7 +60,6 @@ function prepSocial(req, res, callback) {
  *      statusCode : OK (200) if successful, Unauthorized (401) on failure
  *      token : A unique token (application specific) required for
  *              other functions
- *      user : A JSONObject representing your user details
  */
 router.post('/login', function (req, res, next) {
     var username = req.body.username;
@@ -72,7 +71,7 @@ router.post('/login', function (req, res, next) {
         errorHandler.missingParameters(res);
     }
     else {
-        UserModel.findOne({ 'username': username }, function (err, user) {
+        UserModel.findOne({ 'username': username }, "username password", function (err, user) {
             if (err || !user || !bcrypt.compareSync(password, user.password)) {
                 // Invalid credentials
                 res.status(HttpStatus.UNAUTHORIZED);
@@ -91,18 +90,15 @@ router.post('/login', function (req, res, next) {
                     _id : user._id,
                     username : username
                 };
+                // Success
                 res.status(HttpStatus.OK);
                 return res.json(
                     {
                         token : jwt.sign(
                             trimmedUser,
                             config.tokenSecret,
-                            { expiresInMinutes: 1440 * 30 }  // expires in 1 month
-                        ),
-                        // This is used in any apps that need to save the credentials
-                        // such as the Android app
-                        user : trimmedUser,
-                        expires : new Date().getTime() + 30 * 24 * 3600000   // Send expiration time as well
+                            { expiresIn: 2629800 }  // expires in 1 month
+                        )
                     }
                 );
             }
@@ -122,7 +118,6 @@ router.post('/login', function (req, res, next) {
  *      statusCode : Created (201) if successful, Conflict (409) on failure
  *      token : A unique token (application specific) required for
  *              other functions
- *      user : A JSONObject representing your user details
  */
 router.post('/', function (req, res, next) {
     var username = req.body.username;
@@ -152,8 +147,6 @@ router.post('/', function (req, res, next) {
         newGoal.description = "Create a goal and get at it using Goal Buddies!";
         newGoal.type = 1;
         newGoal.pending = true;
-
-console.log(newUser);
         
         newUser.goals.pendingOneTime.unshift(newGoal);
 
@@ -193,11 +186,7 @@ console.log(newUser);
                             trimmedUser,
                             config.tokenSecret,
                             { expiresIn: 2629800 }  // expires in 1 month
-                        ),
-                        // This is used in any apps that need to save the credentials
-                        // such as the Android app
-                        user : trimmedUser,
-                        expires : new Date().getTime() + 30 * 24 * 3600000   // Send expiration time as well
+                        )
                     }
                 );
             }
@@ -220,10 +209,7 @@ router.get('/search/:username?', middle.verifyToken, function (req, res, next) {
         username : req.params.username ? req.params.username : req.user.username
     }
     
-    var returnFields = 'username firstName lastName city goalsCompleted ' +
-        'timesMotivated blocked friends incoming outgoing';
-    
-    UserModel.findOne(userMatchObject, returnFields, function(err, user) {
+    UserModel.findOne(userMatchObject, function(err, user) {
         if(err) {
             errorHandler.logError(err, res);
         } else {
@@ -234,8 +220,9 @@ router.get('/search/:username?', middle.verifyToken, function (req, res, next) {
                     // Want yourself, return everything!
                     return res.json({user: user});
                 } else {
-                    var today = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime();
-                    if (user.lastMotivated < today) {
+                    var today = new Date();
+                    // Clear if it's been more than a day
+                    if ((user.lastMotivated - today) > 86400000) {
                         user.motivators.length = 0;
                         user.save();
                     }

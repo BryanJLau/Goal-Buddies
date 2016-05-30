@@ -74,8 +74,6 @@ Returns:
 
 * ``` statusCode ``` : OK (200) if successful, Unauthorized (401) on failure
 * ``` token ``` : A unique token (application specific) required for other functions
-* ``` user ``` : A JSONObject containing your username and id (more information may 
-be added if necessary)
 
 Register a user
 -------------
@@ -93,8 +91,6 @@ Returns:
 
 * ``` statusCode ``` : Created (201) if successful, Conflict (409) on failure
 * ``` token ``` : A unique token (application specific) required for other functions
-* ``` user ``` : A JSONObject containing your username (more information may 
-be added if necessary)
 
 Note: the personal information is only used for visibility purposes, by no means do 
 you have to input real information if you are not comfortable doing so. Friends will 

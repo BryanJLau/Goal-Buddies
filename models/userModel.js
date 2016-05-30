@@ -2,6 +2,33 @@
 var HttpStatus = require('http-status-codes');
 var GoalModel = require('./goalModel');
 
+/*
+ * Shamelessly adapted from:
+ * http://stackoverflow.com/questions/1027224/how-can-i-test-if-a-letter-in-a-string-is-uppercase-or-lowercase-using-javascrip/9728437#answer-9728437
+ */
+// Check for an uppercase letter, for people who don't capitalize
+function capitalizeName(name) {
+    var nameArray = name.split(" ");
+    
+    for(var j = 0; j < nameArray.length; j++) {
+        var subName = nameArray[j];
+        var i = 0;
+        for (; i < subName.length; i++) {
+            if (subName[i] === subName[i].toUpperCase()
+                && subName[i] !== subName[i].toLowerCase()) {
+                break;
+            }
+        }
+        
+        if(i == name.length) {
+            // No uppercase found, replace it!
+            nameArray[j] = subName.charAt(0).toUpperCase() + subName.slice(1);
+        }
+    }
+    
+    return nameArray.join(" ");
+}
+
 // Define our user schema
 var UserSchema = new mongoose.Schema( {
     username: {
@@ -17,7 +44,8 @@ var UserSchema = new mongoose.Schema( {
         required: [
             true,
             "The field '{PATH}' is required."
-        ]
+        ],
+        select: false
     },
     
     personal: {
@@ -26,21 +54,24 @@ var UserSchema = new mongoose.Schema( {
             required: [
                 true,
                 "The field '{PATH}' is required."
-            ]
+            ],
+            set: capitalizeName
         },
         lastName: {
             type: String,
             required: [
                 true,
                 "The field '{PATH}' is required."
-            ]
+            ],
+            set: capitalizeName
         },
         city: {
             type: String,
             required: [
                 true,
                 "The field '{PATH}' is required."
-            ]
+            ],
+            set: capitalizeName
         },
         dateCreated: {
             type: Date,
@@ -96,7 +127,10 @@ var UserSchema = new mongoose.Schema( {
         // with { username, count } to keep track
         // But we have to .markModified(motivation) every time
         // a motivation is given
-        motivators: {}
+        motivators: {
+            type: {},
+            default: {}
+        },
     },
     
 	relationships: {
