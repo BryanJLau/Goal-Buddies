@@ -129,7 +129,12 @@ var UserSchema = new mongoose.Schema( {
         // a motivation is given
         motivators: {
             type: {},
-            default: {}
+            default: {},
+            select: false
+        },
+        lastMotivator: {
+            type: String,
+            default: "Nobody"
         },
     },
     
@@ -145,16 +150,29 @@ var UserSchema = new mongoose.Schema( {
     // This should help ease computing and allow the client to do
     // more work, while still given all the data
     goals: {
-        // Actual goals
-        pendingRecurring: [ GoalModel.schema ],
-        pendingOneTime: [ GoalModel.schema ],
-        finishedRecurring: [ GoalModel.schema ],
-        finishedOneTime: [ GoalModel.schema ],
-        major: [ GoalModel.schema ]
+        type: {
+            // Actual goals
+            pendingRecurring: [ GoalModel.schema ],
+            pendingOneTime: [ GoalModel.schema ],
+            finishedRecurring: [ GoalModel.schema ],
+            finishedOneTime: [ GoalModel.schema ],
+            major: [ GoalModel.schema ]
+        },
+        default: {
+            pendingRecurring: [],
+            pendingOneTime: [],
+            finishedRecurring: [],
+            finishedOneTime: [],
+            major: []
+        },
+        // Hide this in non-goal-list fetch queries
+        select: false
     }
 });
 
 UserSchema.pre('save', function(next) {
+    // Handle the motivation here
+    
     // Validation
     
     /*

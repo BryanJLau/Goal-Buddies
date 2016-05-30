@@ -147,7 +147,6 @@ router.post('/', function (req, res, next) {
         newGoal.description = "Create a goal and get at it using Goal Buddies!";
         newGoal.type = 1;
         newGoal.pending = true;
-        
         newUser.goals.pendingOneTime.unshift(newGoal);
 
         newUser.save(function (err) {
@@ -213,7 +212,7 @@ router.get('/search/:username?', middle.verifyToken, function (req, res, next) {
         if(err) {
             errorHandler.logError(err, res);
         } else {
-            if(!user || user.blocked.indexOf(req.user.username) > -1) {
+            if(!user || user.relationships.blocking.indexOf(req.user.username) > -1) {
                 errorHandler.userNotFound(res);
             } else {
                 if(!req.params.username || req.params.username == req.user.username) {
@@ -222,7 +221,7 @@ router.get('/search/:username?', middle.verifyToken, function (req, res, next) {
                 } else {
                     var today = new Date();
                     // Clear if it's been more than a day
-                    if ((user.lastMotivated - today) > 86400000) {
+                    if ((user.motivation.lastMotivated - today) > 86400000) {
                         user.motivators.length = 0;
                         user.save();
                     }
@@ -235,28 +234,31 @@ router.get('/search/:username?', middle.verifyToken, function (req, res, next) {
                     // Simplify the social arrays to only contain you
                     // That way we can see your relation to this person
                     var resultUser = {
-                        friends: [],
-                        incoming: [],
-                        outgoing: [],
-                        firstName: "",
-                        lastName: "",
-                        city: user.city,
-                        username: user.username,
-                        goalsCompleted: user.goalsCompleted,
-                        timesMotivated: user.timesMotivated
+                        relationships: {
+                            friends: [],
+                            incoming: [],
+                            outgoing: []
+                        },
+                        personal: {
+                            firstName: "",
+                            lastName: "",
+                            city: user.personal.city,
+                        },
+                        statistics: user.statistics,
+                        username: user.username
                     };
                     
-                    if(user.friends.indexOf(req.user.username) > -1) {
+                    if(user.relationships.friends.indexOf(req.user.username) > -1) {
                         // Friend
-                        resultUser.friends.push(req.user.username);
-                        resultUser.firstName = user.firstName;
-                        resultUser.lastName = user.lastName;
-                    } else if(user.incoming.indexOf(req.user.username) > -1) {
+                        resultUser.relationships.friends.push(req.user.username);
+                        resultUser.personal.firstName = user.personal.firstName;
+                        resultUser.personal.lastName = user.personal.lastName;
+                    } else if(user.relationships.incoming.indexOf(req.user.username) > -1) {
                         // You're requesting friendship
-                        resultUser.incoming.push(req.user.username);
-                    } else if(user.outgoing.indexOf(req.user.username) > -1) {
+                        resultUser.relationships.incoming.push(req.user.username);
+                    } else if(user.relationships.outgoing.indexOf(req.user.username) > -1) {
                         // They're requesting friendship
-                        resultUser.outgoing.push(req.user.username);
+                        resultUser.relationships.outgoing.push(req.user.username);
                     }
                     
                     return res.json({user: resultUser});
@@ -281,28 +283,32 @@ router.post('/social/request/:username?', middle.verifyToken, function (req, res
         var yourUsername = you.username;
         var theirUsername = them.username;
         
-        if(you.blocked.indexOf(theirUsername) > -1 || them.blocked.indexOf(yourUsername) > -1) {
+        if(you.relationships.blocked.indexOf(theirUsername) > -1 ||
+           them.relationships.blocked.indexOf(yourUsername) > -1) {
             // Someone blocked someone
             errorHandler.targetUserNotFound(res);
-        } else if (you.incoming.indexOf(theirUsername) > -1 || them.incoming.indexOf(yourUsername) > -1 ||
-                   you.outgoing.indexOf(theirUsername) > -1 || them.outgoing.indexOf(yourUsername) > -1 ){
+        } else if (you.relationships.incoming.indexOf(theirUsername) > -1 ||
+                   them.relationships.incoming.indexOf(yourUsername) > -1 ||
+                   you.relationships.outgoing.indexOf(theirUsername) > -1 ||
+                   them.relationships.outgoing.indexOf(yourUsername) > -1 ){
             // You can't request when a request is already in progress
             errorHandler.relationFunctionInProgress(res);
-        } else if (you.friends.indexOf(theirUsername) > -1 || them.friends.indexOf(yourUsername) > -1 ){
+        } else if (you.relationships.friends.indexOf(theirUsername) > -1 ||
+                   them.relationships.friends.indexOf(yourUsername) > -1 ){
             // You can't request when you're already friends
             errorHandler.relationFunctionInProgress(res);
         } else {
             // Everything is fine, update and save
-            you.outgoing.push(theirUsername);
+            you.relationships.outgoing.push(theirUsername);
             you.save(function(err) {
                 if(err) {
                     errorHandler.logError(err, res);
                 } else {
-                    them.incoming.push(yourUsername);
+                    them.relationships.incoming.push(yourUsername);
                     them.save(function(err) {
                         if(err) {
                             // Undo your outgoing array because it was pushed
-                            removeUsername(you.outgoing, theirUsername);
+                            removeUsername(you.relationships.outgoing, theirUsername);
                             you.save(function(yourErr) {
                                 if(yourErr) {
                                     errorHandler.logError(yourErr, res);
@@ -335,24 +341,24 @@ router.post('/social/accept/:username?', middle.verifyToken, function (req, res,
         var yourUsername = you.username;
         var theirUsername = them.username;
         
-        if(you.incoming.indexOf(theirUsername) > -1 &&
-           them.outgoing.indexOf(yourUsername) > -1) {
+        if(you.relationships.incoming.indexOf(theirUsername) > -1 &&
+           them.relationships.outgoing.indexOf(yourUsername) > -1) {
             // All good, proceed
             
-            you.friends.push(theirUsername);
-            removeUsername(you.incoming, theirUsername);
+            you.relationships.friends.push(theirUsername);
+            removeUsername(you.relationships.incoming, theirUsername);
             you.save(function(err) {
                 if(err) {
                     errorHandler.logError(err, res);
                 } else {
                     // Change the other user
-                    them.friends.push(yourUsername);
-                    removeUsername(them.outgoing, yourUsername);
+                    them.relationships.friends.push(yourUsername);
+                    removeUsername(them.relationships.outgoing, yourUsername);
                     them.save(function (err) {
                         if(err) {
                             // Rollback your incoming and friends list
-                            removeUsername(you.friends, theirUsername);
-                            you.incoming.push(theirUsername);
+                            removeUsername(you.relationships.friends, theirUsername);
+                            you.relationships.incoming.push(theirUsername);
                             you.save(function(yourErr) {
                                 if(yourErr) {
                                     errorHandler.logError(yourErr, res);
@@ -387,21 +393,21 @@ router.post('/social/reject/:username?', middle.verifyToken, function (req, res,
         var yourUsername = you.username;
         var theirUsername = them.username;
         
-        if(you.incoming.indexOf(theirUsername) > -1 &&
-           them.outgoing.indexOf(yourUsername) > -1) {
+        if(you.relationships.incoming.indexOf(theirUsername) > -1 &&
+           them.relationships.outgoing.indexOf(yourUsername) > -1) {
             // All good, proceed
             
-            removeUsername(you.incoming, theirUsername);
+            removeUsername(you.relationships.incoming, theirUsername);
             you.save(function(err) {
                 if(err) {
                     errorHandler.logError(err, res);
                 } else {
                     // Change the other user
-                    removeUsername(them.outgoing, yourUsername);
+                    removeUsername(them.relationships.outgoing, yourUsername);
                     them.save(function (err) {
                         if(err) {
                             // Rollback your incoming list
-                            you.incoming.push(theirUsername);
+                            you.relationships.incoming.push(theirUsername);
                             you.save(function(yourErr) {
                                 if(yourErr) {
                                     errorHandler.logError(yourErr, res);
@@ -436,21 +442,21 @@ router.post('/social/cancel/:username?', middle.verifyToken, function (req, res,
         var yourUsername = you.username;
         var theirUsername = them.username;
         
-        if(you.outgoing.indexOf(theirUsername) > -1 &&
-           them.incoming.indexOf(yourUsername) > -1) {
+        if(you.relationships.outgoing.indexOf(theirUsername) > -1 &&
+           them.relationships.incoming.indexOf(yourUsername) > -1) {
             // All good, proceed
             
-            removeUsername(you.outgoing, theirUsername);
+            removeUsername(you.relationships.outgoing, theirUsername);
             you.save(function(err) {
                 if(err) {
                     errorHandler.logError(err, res);
                 } else {
                     // Change the other user
-                    removeUsername(them.incoming, yourUsername);
+                    removeUsername(them.relationships.incoming, yourUsername);
                     them.save(function (err) {
                         if(err) {
                             // Rollback your incoming list
-                            you.outgoing.push(theirUsername);
+                            you.relationships.outgoing.push(theirUsername);
                             you.save(function(yourErr) {
                                 if(yourErr) {
                                     errorHandler.logError(yourErr, res);
@@ -485,19 +491,23 @@ router.post('/social/block/:username?', middle.verifyToken, function (req, res, 
         var yourUsername = you.username;
         var theirUsername = them.username;
         
-        if(you.blocked.indexOf(theirUsername) > -1 || them.blocked.indexOf(yourUsername) > -1) {
+        if(you.relationships.blocked.indexOf(theirUsername) > -1 ||
+           them.relationships.blocked.indexOf(yourUsername) > -1) {
             // Someone blocked someone
             errorHandler.targetUserNotFound(res);
-        } else if (you.incoming.indexOf(theirUsername) > -1 || them.incoming.indexOf(yourUsername) > -1 ||
-                   you.outgoing.indexOf(theirUsername) > -1 || them.outgoing.indexOf(yourUsername) > -1 ){
+        } else if (you.relationships.incoming.indexOf(theirUsername) > -1 ||
+                   them.relationships.incoming.indexOf(yourUsername) > -1 ||
+                   you.relationships.outgoing.indexOf(theirUsername) > -1 ||
+                   them.relationships.outgoing.indexOf(yourUsername) > -1 ){
             // You can't request when a request is already in progress
             errorHandler.relationFunctionInProgress(res);
-        } else if (you.friends.indexOf(theirUsername) > -1 || them.friends.indexOf(yourUsername) > -1 ){
+        } else if (you.relationships.friends.indexOf(theirUsername) > -1 ||
+                   them.relationships.friends.indexOf(yourUsername) > -1 ){
             // You can't request when you're already friends
             errorHandler.relationFunctionInProgress(res);
         } else {
             // Everything is fine, update and save
-            you.blocked.push(theirUsername);
+            you.relationships.blocked.push(theirUsername);
             you.save(function(err) {
                 if(err) {
                     errorHandler.logError(err, res);
@@ -526,21 +536,21 @@ router.post('/social/unfriend/:username?', middle.verifyToken, function (req, re
         var yourUsername = you.username;
         var theirUsername = them.username;
         
-        if(you.friends.indexOf(theirUsername) > -1 &&
-           them.friends.indexOf(yourUsername) > -1) {
+        if(you.relationships.friends.indexOf(theirUsername) > -1 &&
+           them.relationships.friends.indexOf(yourUsername) > -1) {
             // All good, proceed
             
-            removeUsername(you.friends, theirUsername);
+            removeUsername(you.relationships.friends, theirUsername);
             you.save(function(err) {
                 if(err) {
                     errorHandler.logError(err, res);
                 } else {
                     // Change the other user
-                    removeUsername(them.friends, yourUsername);
+                    removeUsername(them.relationships.friends, yourUsername);
                     them.save(function (err) {
                         if(err) {
                             // Rollback your incoming list
-                            you.friends.push(theirUsername);
+                            you.relationships.friends.push(theirUsername);
                             you.save(function(yourErr) {
                                 if(yourErr) {
                                     errorHandler.logError(yourErr, res);
@@ -577,10 +587,10 @@ router.post('/social/unblock/:username?', middle.verifyToken, function (req, res
         var yourUsername = you.username;
         var theirUsername = them.username;
         
-        if(you.blocked.indexOf(theirUsername) > -1) {
+        if(you.relationships.blocked.indexOf(theirUsername) > -1) {
             // All good, proceed
             
-            removeUsername(you.blocked, theirUsername);
+            removeUsername(you.relationships.blocked, theirUsername);
             you.save(function(err) {
                 if(err) {
                     errorHandler.logError(err, res);
