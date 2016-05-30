@@ -283,8 +283,8 @@ router.post('/social/request/:username?', middle.verifyToken, function (req, res
         var yourUsername = you.username;
         var theirUsername = them.username;
         
-        if(you.relationships.blocked.indexOf(theirUsername) > -1 ||
-           them.relationships.blocked.indexOf(yourUsername) > -1) {
+        if(you.relationships.blocking.indexOf(theirUsername) > -1 ||
+           them.relationships.blocking.indexOf(yourUsername) > -1) {
             // Someone blocked someone
             errorHandler.targetUserNotFound(res);
         } else if (you.relationships.incoming.indexOf(theirUsername) > -1 ||
@@ -491,8 +491,8 @@ router.post('/social/block/:username?', middle.verifyToken, function (req, res, 
         var yourUsername = you.username;
         var theirUsername = them.username;
         
-        if(you.relationships.blocked.indexOf(theirUsername) > -1 ||
-           them.relationships.blocked.indexOf(yourUsername) > -1) {
+        if(you.relationships.blocking.indexOf(theirUsername) > -1 ||
+           them.relationships.blocking.indexOf(yourUsername) > -1) {
             // Someone blocked someone
             errorHandler.targetUserNotFound(res);
         } else if (you.relationships.incoming.indexOf(theirUsername) > -1 ||
@@ -507,7 +507,7 @@ router.post('/social/block/:username?', middle.verifyToken, function (req, res, 
             errorHandler.relationFunctionInProgress(res);
         } else {
             // Everything is fine, update and save
-            you.relationships.blocked.push(theirUsername);
+            you.relationships.blocking.push(theirUsername);
             you.save(function(err) {
                 if(err) {
                     errorHandler.logError(err, res);
@@ -587,10 +587,10 @@ router.post('/social/unblock/:username?', middle.verifyToken, function (req, res
         var yourUsername = you.username;
         var theirUsername = them.username;
         
-        if(you.relationships.blocked.indexOf(theirUsername) > -1) {
+        if(you.relationships.blocking.indexOf(theirUsername) > -1) {
             // All good, proceed
             
-            removeUsername(you.relationships.blocked, theirUsername);
+            removeUsername(you.relationships.blocking, theirUsername);
             you.save(function(err) {
                 if(err) {
                     errorHandler.logError(err, res);

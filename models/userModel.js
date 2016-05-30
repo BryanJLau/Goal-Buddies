@@ -221,12 +221,14 @@ UserSchema.pre('save', function(next) {
             break;
     }
     
-    if (
-        goalsObject.pendingRecurring.length > limitObject.pending ||
-        goalsObject.pendingOneTime.length > limitObject.pending ||
-        goalsObject.finishedRecurring.length > limitObject.finished ||
-        goalsObject.finishedOneTime.length > limitObject.finished ||
-        goalsObject.major.length > limitObject.major
+    // Update the goals object only if changes were made
+    if (goalsObject && (
+            goalsObject.pendingRecurring.length > limitObject.pending ||
+            goalsObject.pendingOneTime.length > limitObject.pending ||
+            goalsObject.finishedRecurring.length > limitObject.finished ||
+            goalsObject.finishedOneTime.length > limitObject.finished ||
+            goalsObject.major.length > limitObject.major
+    )
     ) {
         var err = new Error('Goal list capacity exceeded.');
         err.statusCode = HttpStatus.BAD_REQUEST;
