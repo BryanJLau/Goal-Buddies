@@ -95,7 +95,7 @@ var UserSchema = new mongoose.Schema( {
         
         totalGoals: {
             type: Number,
-            default: 0
+            default: 1
         },
         goalsCompleted: {
             type: Number,
@@ -150,23 +150,11 @@ var UserSchema = new mongoose.Schema( {
     // This should help ease computing and allow the client to do
     // more work, while still given all the data
     goals: {
-        type: {
-            // Actual goals
-            pendingRecurring: [ GoalModel.schema ],
-            pendingOneTime: [ GoalModel.schema ],
-            finishedRecurring: [ GoalModel.schema ],
-            finishedOneTime: [ GoalModel.schema ],
-            major: [ GoalModel.schema ]
-        },
-        default: {
-            pendingRecurring: [],
-            pendingOneTime: [],
-            finishedRecurring: [],
-            finishedOneTime: [],
-            major: []
-        },
-        // Hide this in non-goal-list fetch queries
-        select: false
+        pendingRecurring: [ GoalModel.schema ],
+        pendingOneTime: [ GoalModel.schema ],
+        finishedRecurring: [ GoalModel.schema ],
+        finishedOneTime: [ GoalModel.schema ],
+        major: [ GoalModel.schema ]
     }
 });
 
