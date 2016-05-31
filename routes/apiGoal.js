@@ -223,6 +223,7 @@ router.post('/:id/finish', middle.verifyToken, function (req, res, next) {
 router.post('/:id/motivate', middle.verifyToken, function (req, res, next) {
     res.status(HttpStatus.NOT_IMPLEMENTED);
     return res.send("Functionality under development");
+    
     //return res.send("Function not implemented yet.");
     /*
      * The general flow of the function is as follows:
@@ -328,72 +329,37 @@ router.post('/:id/motivate', middle.verifyToken, function (req, res, next) {
  *      statusCode : No Content (204) if successful, Not Found (404) on failure
  */
 router.post('/:id/delete', middle.verifyToken, function (req, res, next) {
-    res.status(HttpStatus.NOT_IMPLEMENTED);
-    return res.send("Functionality under development");
-    /*
-     * The general flow of the function is as follows:
-     * 1. Find the goal
-     * 2. Check the goal and remove it
-     * 3. Update totalGoals for the user and save
-     */
+    var id = req.params.id;
     
-    // 1. Find the goal
-    GoalModel.findById(req.params.id, findingGoal);
-    
-    // 2. Check the goal and remove it
-    function findingGoal(err, goal) {
-        if (err) {
-            errorHandler.logError(err);
-        } else if (!goal || goal.userId != req.user._id) {
-            // Either the goal wasn't found, or it wasn't the user's
-            errorHandler.goalNotFound(res);
-        }
-        else {
-            if (!goal.pending) {
-                errorHandler.completedGoal(res);
+    UserModel.findById(req.user._id, 'goals statistics', function(err, user) {
+        if(err) {
+            return errorHandler.logError(res);
+        } else if (!user) {
+            return errorHandler.userNotFound(res);
+        } else {
+            var goal =
+                user.goals.pendingRecurring.id(id) ||
+                user.goals.pendingOneTime.id(id) ||
+                user.goals.finishedRecurring.id(id) ||
+                user.goals.finishedOneTime.id(id) ||
+                user.goals.major.id(id);
+            
+            if(goal) {
+                goal.remove();
+            } else {
+                return errorHandler.goalNotFound(res);
             }
-            else {
-                GoalModel.findByIdAndRemove(req.params.id, deletingGoal);
-            }
+            
+            user.save(function(err) {
+                if(err) {
+                    return errorHandler.logError(err, res);
+                } else {
+                    res.status(HttpStatus.NO_CONTENT);
+                    return res.send('');
+                }
+            })
         }
-    }
-    
-    // 3. Update totalGoals for the user and save
-    function deletingGoal(err) {
-        if (err) {
-            errorHandler.logError(err, res);
-        }
-        else {
-            UserModel.findByIdAndUpdate(
-                req.user._id,
-                {
-                    $inc: {
-                        totalGoals: -1
-                    }
-                },
-                {
-                    new : true      // Returns modified user (need updated version)
-                },
-                savingUser
-            );
-        }
-    }
-    
-    // Return appropriate response
-    function savingUser(err, user) {
-        if (err) {
-            errorHandler.logError(err, res);
-        }
-        else if (!user) {
-            // Should not happen
-            errorHandler.userNotFound(res);
-        }
-        else {
-            // Save successful
-            res.status(HttpStatus.NO_CONTENT);
-            return res.send('');
-        }
-    }
+    });
 });
 
 module.exports = router;
