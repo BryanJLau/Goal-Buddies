@@ -118,6 +118,8 @@ router.post('/', middle.verifyToken, function (req, res, next) {
  *      goal : A JSONObject representing your new goal details
  */
 router.post('/:id/edit', middle.verifyToken, function (req, res, next) {
+    res.status(HttpStatus.NOT_IMPLEMENTED);
+    return res.send("Functionality under development");
     /*
      * The general flow of the function is as follows:
      * 1. Update version for user and save
@@ -209,6 +211,8 @@ router.post('/:id/edit', middle.verifyToken, function (req, res, next) {
  *      goal : A JSONObject representing your new goal details
  */
 router.post('/:id/finish', middle.verifyToken, function (req, res, next) {
+    res.status(HttpStatus.NOT_IMPLEMENTED);
+    return res.send("Functionality under development");
     /*
      * The general flow of the function is as follows:
      * 1. Update goalsCompleted and version for user and save
@@ -329,6 +333,8 @@ router.post('/:id/finish', middle.verifyToken, function (req, res, next) {
  *      statusCode : No Content (204) if successful, Unauthorized (401) on failure
  */
 router.post('/:id/motivate', middle.verifyToken, function (req, res, next) {
+    res.status(HttpStatus.NOT_IMPLEMENTED);
+    return res.send("Functionality under development");
     //return res.send("Function not implemented yet.");
     /*
      * The general flow of the function is as follows:
@@ -434,6 +440,8 @@ router.post('/:id/motivate', middle.verifyToken, function (req, res, next) {
  *      statusCode : No Content (204) if successful, Not Found (404) on failure
  */
 router.post('/:id/delete', middle.verifyToken, function (req, res, next) {
+    res.status(HttpStatus.NOT_IMPLEMENTED);
+    return res.send("Functionality under development");
     /*
      * The general flow of the function is as follows:
      * 1. Find the goal
