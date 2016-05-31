@@ -24,10 +24,7 @@ var GoalSchema = new mongoose.Schema({
     },
     pending: {
         type : Boolean,
-        required : [
-            true,
-            "The field '{PATH}' is required."
-        ]
+        default : true
     },
     
     dates: {

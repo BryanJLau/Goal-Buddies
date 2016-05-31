@@ -12,115 +12,34 @@ var UserModel = require('../models/userModel');
 var GoalModel = require('../models/goalModel');
 
 router.get('/list/:username?', middle.verifyToken, middle.cleanBody, function (req, res, next) {
-    // Only do something if you're friends with the target
-    if(req.params.username && req.params.username != req.user.username) {
-        UserModel.findOne({username: req.params.username}, function(err, user) {
-            if(err) {
-                errorHandler.logError(err, res);
-            } else if(!user || user.blocked.indexOf(req.user.username) > -1) {
-                errorHandler.targetUserNotFound(res);
-            } else {
-                if(user.friends.indexOf(req.user.username) > -1) {
-                    // You're actually friends, proceed
-                    getGoalList(user._id);
-                } else {
-                    errorHandler.targetUserNotFriend(res);
-                }
-            }
-        });
-    } else {
-        getGoalList(req.user._id);
-    }
-    
-    function getGoalList(userId) {
-        // Base condition
-        var matchObject = {
-            userId : userId
-        };
-        
-        if(userId != req.user._id) {
-            // Set restrictions for other users
-            if (typeof req.query.type == 'undefined' || req.query.type == '' ) {
-                errorHandler.missingParameters(res);
-            } else {
-                matchObject.type = parseInt(req.query.type);
-                matchObject.pending = true;
-                
-                GoalModel
-                    .find(matchObject)
-                    .limit(20)
-                    .sort({ eta : 1 })
-                    .exec(foundGoals);
-            }
-        } else {
-            if(req.query.all) {
-                // Get everything!
-                GoalModel
-                    .find(matchObject)
-                    .sort({ eta : 1 })
-                    .exec(foundGoals);
-            } else {
-                // Add the restrictions in
-                
-                matchObject.version = {
-                    $gt: parseInt(req.query.version) || 0
-                };
-                matchObject.type = parseInt(req.query.type) || 0;
-                // Default to true, but false if not 'true' (case insensitive)
-                matchObject.pending = 
-                    req.query.pending ? req.query.pending.toLowerCase() === 'true' : true;
-                    
-                if(req.query.q) {
-                    // We want to text search as well
-                    matchObject.$text = {
-                        $search : req.query.q
-                    };
-                }
-                
-                var goalQuery = GoalModel
-                    .find(matchObject)
-                    .sort({ eta : 1 });
-                
-                // Modify the query if there's a limit present
-                if(req.query.limit) {
-                    goalQuery = goalQuery.limit(parseInt(req.query.limit) || 10);
-                }
-                if(req.query.offset) {
-                    goalQuery = goalQuery.skip(parseInt(req.query.offset) || 0)
-                }
-                
-                goalQuery.exec(foundGoals);
-            }
-        }
-    }
-    
-    function foundGoals(err, goals) {
-        if (err) {
-            // Invalid credentials
+    var username = req.params.username || req.user.username;
+    UserModel.findOne({username: username}, 'relationships goals', function(err, user) {
+        console.log(user);
+        if(err) {
             errorHandler.logError(err, res);
-        }
-        else {
-            // Success! Build a JSON web token and give it to the client
-            var goalList = [];
-            // Versioning for apps
-            var maxVersion = 0;
-            
-            for (var i = 0; i < goals.length; i++) {
-                if (req.query.all) maxVersion = Math.max(maxVersion, goals[i].version);
-                goalList.push(goals[i]);
+        } else if(!user ||
+                  user.relationships.blocking.indexOf(req.user.username) > -1) {
+            // We shouldn't display information about nonexistent users
+            // and people who have blocked you
+            errorHandler.targetUserNotFound(res);
+        } else {
+            if(!req.params.username || username == req.user.username) {
+                // Want your own goals, so get everything
+                return res.json(user.goals);
+            } else if(user.relationships.friends.indexOf(req.user.username) > -1) {
+                // You're actually friends, proceed
+                // Don't return all the goals, just pending and major
+                // for motivations and eye candy respectively
+                var goals = {};
+                goals.pendingRecurring = user.goals.pendingRecurring;
+                goals.pendingOneTime = user.goals.pendingOneTime;
+                goals.major = user.goals.major;
+                return res.json(goals);
+            } else {
+                errorHandler.targetUserNotFriend(res);
             }
-            
-            res.status(HttpStatus.OK);
-            var responseJson = {
-                goals : goalList,
-                totalGoals : goals.length
-            }
-            // Only include version if requesting all goals for yourself
-            if (req.query.all && !req.params.username)
-                responseJson.maxVersion = maxVersion
-            return res.json(responseJson);
         }
-    }
+    });
 });
 
 /*
@@ -136,105 +55,57 @@ router.get('/list/:username?', middle.verifyToken, middle.cleanBody, function (r
  *      goal : A JSONObject representing your new goal details
  */
 router.post('/', middle.verifyToken, function (req, res, next) {
-    /*
-     * The general flow of the function is as follows:
-     * 1. Update totalGoals and version for user and save
-     * 2. Create the goal and save it
-     * 3. Return the goal to the user
-     */
-
-    var description = req.body.description;
-    var type = req.body.type;
-    var icon = req.body.icon || "star";
     var daysToFinish = parseInt(req.body.daysToFinish);
-
-    if (typeof description == 'undefined' || typeof type == 'undefined' ||
-        typeof daysToFinish == 'undefined' ||
-        description == '' || type == '' ||
-        daysToFinish == '') {
-        errorHandler.missingParameters(res);
+    var d = new Date();
+    
+    var newGoal = new GoalModel();
+    newGoal.description = req.body.description;
+    newGoal.type = parseInt(req.body.type);
+    newGoal.icon = req.body.icon;
+    if(daysToFinish) {
+        newGoal.eta = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0)
+            .getTime() + 86400000 * parseInt(daysToFinish);
     }
-    else {
-        var version = 0;    // Needs to be outside scope of local functions
-        var newGoal = new GoalModel();  // Needs to be outside to return
+    
+    UserModel.findById(req.user._id, 'goals statistics', function(err, user) {
+        if(err) {
+            return errorHandler.logError(res);
+        } else if (!user) {
+            errorHandler.userNotFound(res);
+        } else {
+            switch(parseInt(req.body.type)) {
+                case 0:
+                    user.goals.pendingRecurring.unshift(newGoal);
+                    break;
+                case 1:
+                    user.goals.pendingOneTime.unshift(newGoal);
+                    break;
+                default:
+                    return errorHandler.missingParameters(res);
+            }
+        }
         
-        // 1. Update totalGoals and version for user and save
-        UserModel.findByIdAndUpdate(
-            req.user._id,
-            {
-                $inc: {
-                    version: 1,
-                    totalGoals: 1
+        user.statistics.totalGoals++;
+        
+        user.save(function(err) {
+            if(err) {
+                // Check for validation errors
+                for (var property in err.errors) {
+                    if(err.errors.hasOwnProperty(property)) {
+                        if(err.errors[property].value == undefined) {
+                            // .path has the missing field name
+                            return errorHandler.missingParameters(res);
+                        }
+                    }
                 }
-            },
-            {
-                new : true      // Returns modified user (need updated version)
-            },
-            savingUser
-        );
-        
-        // 2. Create the goal and save it
-        function savingUser (err, user) {
-            if (err) {
-                errorHandler.logError(err, res);
-            }
-            else if (!user) {
-                errorHandler.userNotFound(res);
-            }
-            else {
-                // Save successful
-                var d = new Date();
                 
-                // User found, craft a goal, push it onto the goal array, and save
-                newGoal.userId = req.user._id;
-                newGoal.description = description;
-                newGoal.type = type;
-                newGoal.icon = icon;
-                newGoal.eta = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0)
-                    .getTime() + 86400000 * parseInt(daysToFinish);
-                newGoal.version = user.version;
-
-                newGoal.save(savingGoal);
-            }
-        }
-        
-        // 3. Return the goal to the user
-        function savingGoal (err) {
-            if (err) {
-                errorHandler.logError(err, res);
-                rollBackUser();
-            }
-            else {
-                console.log("Successfully created goal: " + newGoal._id +
-                            " for user " + req.user._id + ".");
+                return errorHandler.logError(err, res);
+            } else {
                 res.status(HttpStatus.CREATED);
-                return res.json(
-                    {
-                        goal : newGoal
-                    }
-                );
+                return res.json(newGoal);
             }
-        }
-        
-        // This function should happen in the background in the server
-        function rollBackUser () {
-            console.log("Rolling back user " + req.user._id + " after " +
-                "failed goal creation."
-            );
-            UserModel.findByIdAndUpdate(
-                req.user._id,
-                {
-                    $inc: {
-                        totalGoals: -1
-                    }
-                },
-                // This should happen in the background without user knowing
-                function (err, user) {
-                    if (err) console.log(err);
-                }
-            );
-        }   // End rollBackUser
-    }
+        });
+    });
 });
 
 /*
