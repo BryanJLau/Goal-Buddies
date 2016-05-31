@@ -114,90 +114,42 @@ router.post('/', middle.verifyToken, function (req, res, next) {
  *      token : Your personal access token
  *      description : Your new description of the goal
  * Returns:
- *      statusCode : Ok (205) if successful, Not Found (404) on failure
+ *      statusCode : Ok (200) if successful, Not Found (404) on failure
  *      goal : A JSONObject representing your new goal details
  */
 router.post('/:id/edit', middle.verifyToken, function (req, res, next) {
-    res.status(HttpStatus.NOT_IMPLEMENTED);
-    return res.send("Functionality under development");
-    /*
-     * The general flow of the function is as follows:
-     * 1. Update version for user and save
-     * 2. Find, update, and save the goal
-     * 3. Return the goal to the user
-     */
-    
     var description = req.body.description;
+    var id = req.params.id;
     
-    if (typeof description == 'undefined' || description == '') {
+    if (!description) {
         errorHandler.missingParameters(res);
-    }
-    else {
-        var version = 0;    // Needs to be outside scope of local functions
-        
-        // 1. Update version for user and save
-        UserModel.findByIdAndUpdate(
-            req.user._id,
-            {
-                $inc: {
-                    version: 1
+    } else {
+        UserModel.findById(req.user._id, 'goals', function(err, user) {
+            if(err) {
+                return errorHandler.logError(res);
+            } else if (!user) {
+                return errorHandler.userNotFound(res);
+            } else {
+                var goal;
+                
+                if(goal = user.goals.pendingRecurring.id(id)) {
+                    goal.description = description;
+                } else if(goal = user.goals.pendingOneTime.id(id)) {
+                    goal.description = description;
+                } else {
+                    errorHandler.goalNotFound(res);
                 }
-            },
-            {
-                new : true      // Returns modified user (need updated version)
-            },
-            savingUser
-        );
-        
-        // 2. Find, update, and save the goal
-        function savingUser(err, user) {
-            if (err) {
-                errorHandler.logError(err, res);
-            }
-            else if (!user) {
-                errorHandle.userNotFound(res);
-            }
-            else {
-                version = user.version;
-
-                GoalModel.findByIdAndUpdate(
-                    req.params.id,
-                    {
-                        // To prevent overwriting it with incomplete details
-                        $set: {
-                            description: description,
-                            version: version
-                        }
-                    },
-                    {
-                        new : true      // Returns modified goal
-                    },
-                    updatingGoal
-                );
-            }
-        }
-
-        // 3. Return the goal to the user
-        function updatingGoal(err, goal) {
-            if (err) {
-                errorHandler.logError(err, res);
-            }
-            else if (!goal) {
-                errorHandler.goalNotFound(res);
-            }
-            else {
-                console.log(
-                    "Successfully edited description for goal " +
-                    req.params.id
-                );
-                res.status(HttpStatus.OK);
-                return res.json(
-                    {
-                        goal : goal
+                
+                user.save(function(err) {
+                    if(err) {
+                        return errorHandler.logError(err, res);
+                    } else {
+                        res.status(HttpStatus.OK);
+                        return res.json(goal);
                     }
-                );
+                });
             }
-        }   // End updatingGoal
+        });
     }
 });
 
