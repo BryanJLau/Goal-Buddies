@@ -103,9 +103,15 @@ var UserSchema = new mongoose.Schema( {
         }
     },
     
-    premiumTier: {
-        type: Number,
-        default: 0
+    premium: {
+        tier: {
+            type: Number,
+            default: 0
+        },
+        expires: {
+            type: Date,
+            default: null
+        }
     },
     
     notifications: [
@@ -209,25 +215,53 @@ UserSchema.pre('save', function(next) {
             break;
     }
     
-    // Update the goals object only if changes were made
-    if (goalsObject && (
-            goalsObject.pendingRecurring.length > limitObject.pending ||
-            goalsObject.pendingOneTime.length > limitObject.pending ||
-            goalsObject.finishedRecurring.length > limitObject.finished ||
-            goalsObject.finishedOneTime.length > limitObject.finished ||
-            goalsObject.major.length > limitObject.major
-    )
-    ) {
-        var err = new Error('Goal list capacity exceeded.');
-        err.statusCode = HttpStatus.BAD_REQUEST;
-        err.error = "You have too many goals. Try finishing or deleting " +
-                    "some goals first.";
-        err.devError = "User's goal list capacity exceeded. Prompt the user " +
-                       " to finish or delete goals first.";
-                       console.log(err);
-        next(err);
-    } else {
-        next();
+    if(goalsObject) {
+        // Truncate goal lists, in case you had premium and it expired
+        // Have to leave one extra goal in case you just tried adding it
+        while(goalsObject.pendingRecurring.length > limitObject.pending + 1) {
+            goalsObject.pendingRecurring.pop();
+        }
+        while(goalsObject.pendingOneTime.length > limitObject.pending + 1) {
+            goalsObject.pendingOneTime.pop();
+        }
+        // Finished goals don't really matter, truncate them
+        while(goalsObject.finishedRecurring.length > limitObject.finished) {
+            goalsObject.finishedRecurring.pop();
+        }
+        while(goalsObject.finishedOneTime.length > limitObject.finished) {
+            goalsObject.finishedOneTime.pop();
+        }
+        while(goalsObject.major.length > limitObject.major) {
+            goalsObject.major.pop();
+        }
+        
+        // Handle if you try to make one more goal over the limit
+        if(
+            (goalsObject.pendingRecurring.length == limitObject.pending + 1) ||
+            (goalsObject.pendingOneTime.length == limitObject.pending + 1)
+        ) {
+            var err = new Error('Goal list capacity exceeded.');
+            err.statusCode = HttpStatus.BAD_REQUEST;
+            err.error = "You have too many goals. Try finishing or deleting " +
+                        "some goals first.";
+            err.devError = "User's goal list capacity exceeded. Prompt the user " +
+                        " to finish or delete goals first.";
+                        console.log(err);
+            next(err);
+        } else {            
+            // Sort the goal lists, and save
+            function goalFinishSort(goal1, goal2) {
+                return goal1.dates.finished < goal2.dates.finished;
+            }
+            
+            goalsObject.pendingRecurring.sort(goalFinishSort);
+            goalsObject.pendingOneTime.sort(goalFinishSort);
+            goalsObject.finishedRecurring.sort(goalFinishSort);
+            goalsObject.finishedOneTime.sort(goalFinishSort);
+            goalsObject.major.sort(goalFinishSort);
+            
+            next();
+        }
     }
 });
 

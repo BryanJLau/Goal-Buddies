@@ -37,7 +37,7 @@ var GoalSchema = new mongoose.Schema({
             type : Date,
             default : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime() + 86400000
         },
-        lastMotivated: {
+        lastDate: {
             type : Date,
             default : null
         },

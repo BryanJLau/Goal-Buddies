@@ -63,9 +63,12 @@ router.post('/', middle.verifyToken, function (req, res, next) {
     newGoal.type = parseInt(req.body.type);
     newGoal.icon = req.body.icon;
     if(daysToFinish) {
-        newGoal.eta = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0)
-            .getTime() + 86400000 * parseInt(daysToFinish);
+        newGoal.dates.finished = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0)
+            .getTime() + 86400000 * daysToFinish;
     }
+    
+    console.log(daysToFinish);
+    console.log(req.body.daysToFinish);
     
     UserModel.findById(req.user._id, 'goals statistics', function(err, user) {
         if(err) {
@@ -137,7 +140,7 @@ router.post('/:id/edit', middle.verifyToken, function (req, res, next) {
                 } else if(goal = user.goals.pendingOneTime.id(id)) {
                     goal.description = description;
                 } else {
-                    errorHandler.goalNotFound(res);
+                    return errorHandler.goalNotFound(res);
                 }
                 
                 user.save(function(err) {
@@ -163,118 +166,51 @@ router.post('/:id/edit', middle.verifyToken, function (req, res, next) {
  *      goal : A JSONObject representing your new goal details
  */
 router.post('/:id/finish', middle.verifyToken, function (req, res, next) {
-    res.status(HttpStatus.NOT_IMPLEMENTED);
-    return res.send("Functionality under development");
-    /*
-     * The general flow of the function is as follows:
-     * 1. Update goalsCompleted and version for user and save
-     * 2. Find the goal
-     * 3. Update and save the goal
-     * 4. Return the goal to the user
-     */
+    var id = req.params.id;
     
-    var version = 0;    // Needs to be outside scope of local functions
-    var oldGoal = null;  // Needs to be outside to return
-
-    // 1. Update goalsCompleted and version for user and save
-    UserModel.findByIdAndUpdate(
-        req.user._id,
-        {
-            $inc: {
-                version: 1,
-                goalsCompleted: 1
-            }
-        },
-        {
-            new : true      // Returns modified user (need updated version)
-        },
-        savingUser
-    );
-    
-    // 2. Find the goal
-    function savingUser(err, user) {
-        if (err) {
-            errorHandler.logError(err, res);
-        }
-        else if (!user) {
-            errorHandler.userNotFound(res);
-        }
-        else {
-            version = user.version;
-
-            // Save successful
-            GoalModel.findById(req.params.id, findingGoal);
-        }
-    }
-    
-    // 3. Update and save the goal
-    function findingGoal(err, goal) {
-        if (err) {
-            errorHandler.logError(err, res);
-        }
-        else if (!goal) {
-            errorHandler.goalNotFound(res);
-        }
-        else {
-            // Calculate today for last finish comparison
-            var d = new Date();
-            var today = new Date(d.getFullYear(), d.getMonth(),
-                    d.getDate(), 0, 0, 0, 0).getTime() + 86400000;
-
-            if (!goal.pending || goal.finished >= today) {
-                errorHandler.completedGoal(res);
-            }
-            else {
-                goal.finished = today;
-                if (goal.type == statics.goalTypes.recurring()) {
+    UserModel.findById(req.user._id, 'goals statistics', function(err, user) {
+        if(err) {
+            return errorHandler.logError(res);
+        } else if (!user) {
+            return errorHandler.userNotFound(res);
+        } else {
+            var goal;
+            
+            if(goal = user.goals.pendingRecurring.id(id)) {
+                var d = new Date();
+                // Can't finish more than once per day
+                if(d - goal.dates.lastDate < 86400000) {
+                    return errorHandler.goalFinishedToday(res);
+                } else {
+                    goal.dates.lastDate =
+                        new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime();
                     goal.times++;
                 }
-                else if (goal.type == statics.goalTypes.oneTime()) {
-                    goal.pending = false;
-                }
-
-                oldGoal = goal;
-                goal.save(savingGoal);
+            } else if(goal = user.goals.pendingOneTime.id(id)) {
+                // Add to daysSaved (or subtract, hopefully not)
+                user.statistics.daysSaved +=
+                    (goal.dates.finished - goal.dates.created) / 86400000;
+                    
+                goal.dates.finished = new Date();
+                user.goals.finishedOneTime.unshift(goal);
+                
+                user.goals.pendingOneTime.id(id).remove();
+            } else {
+                return errorHandler.goalNotFound(res);
             }
-        }
-    }
-
-    // 4. Return the goal to the user
-    function savingGoal(err) {
-        if (err) {
-            errorHandler.logError(err, res);
-            rollBackUser();
-        }
-        else {
-            console.log("Successfully finished goal: " + oldGoal._id +
-                            " for user " + req.user._id + ".");
-            res.status(HttpStatus.OK);
-            return res.json(
-                {
-                    goal : oldGoal
+            
+            user.statistics.goalsCompleted++;
+            
+            user.save(function(err) {
+                if(err) {
+                    return errorHandler.logError(err, res);
+                } else {
+                    res.status(HttpStatus.OK);
+                    return res.json(goal);
                 }
-            );
+            });
         }
-    }
-    
-    // This function should happen in the background in the server
-    function rollBackUser() {
-        console.log("Rolling back user " + req.user._id + " after " +
-                "failed goal finishing."
-        );
-        UserModel.findByIdAndUpdate(
-            req.user._id,
-                {
-                $inc: {
-                    goalsCompleted: -1
-                }
-            },
-                // This should happen in the background without user knowing
-                function (err, user) {
-                if (err) console.log(err);
-            }
-        );
-    }   // End rollBackUser
+    });
 });
 
 /*
