@@ -125,23 +125,26 @@ var UserSchema = new mongoose.Schema( {
     ],
     
     motivation: {
-        lastMotivated: {
-            type: Date,
-            default: null
+        type: {
+            lastMotivated: {
+                type: Date,
+                default: null
+            },
+            // For simplicity, motivators should be a hash table
+            // with { username, count } to keep track
+            // But we have to .markModified(motivation) every time
+            // a motivation is given
+            motivators: {
+                type: {},
+                default: {},
+                select: false
+            },
+            lastMotivator: {
+                type: String,
+                default: null
+            }
         },
-        // For simplicity, motivators should be a hash table
-        // with { username, count } to keep track
-        // But we have to .markModified(motivation) every time
-        // a motivation is given
-        motivators: {
-            type: {},
-            default: {},
-            select: false
-        },
-        lastMotivator: {
-            type: String,
-            default: "Nobody"
-        },
+        select: false
     },
     
 	relationships: {
@@ -165,7 +168,31 @@ var UserSchema = new mongoose.Schema( {
 });
 
 UserSchema.pre('save', function(next) {
+    var d = new Date();
+    var today = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime();
+    
     // Handle the motivation here
+    if(this.motivation) {
+        // This should only occur on a motivation, so it's safe
+        if(!this.motivation.motivators[this.motivation.lastMotivator]) {
+            // Not set, so add it
+            this.motivation.motivators[this.motivation.lastMotivator] = 1;
+        } else {
+            this.motivation.motivators[this.motivation.lastMotivator]++;
+        }
+        
+        this.motivation.lastMotivated = today;
+        
+        this.markModified('motivation');
+    }
+    
+    // Truncate notifications to 10
+    if(this.notifications) {
+        while(this.notifications.length > 10) {
+            this.notifications.pop();
+        }
+        this.markModified('notifications');
+    }
     
     // Validation
     
@@ -187,7 +214,7 @@ UserSchema.pre('save', function(next) {
     var limitObject = {};
     
     var goalsObject = this.goals;
-    switch(this.premiumTier) {
+    switch(this.premium.tier) {
         // Beta users
         case -1:
             limitObject.pending = 20;
@@ -215,7 +242,8 @@ UserSchema.pre('save', function(next) {
             break;
     }
     
-    if(goalsObject) {
+    // For some reason, goals can be empty
+    if(goalsObject && Object.keys(goalsObject).length === 0) {
         // Truncate goal lists, in case you had premium and it expired
         // Have to leave one extra goal in case you just tried adding it
         while(goalsObject.pendingRecurring.length > limitObject.pending + 1) {
@@ -247,7 +275,7 @@ UserSchema.pre('save', function(next) {
             err.devError = "User's goal list capacity exceeded. Prompt the user " +
                         " to finish or delete goals first.";
                         console.log(err);
-            next(err);
+            return next(err);
         } else {            
             // Sort the goal lists, and save
             function goalFinishSort(goal1, goal2) {
@@ -259,10 +287,10 @@ UserSchema.pre('save', function(next) {
             goalsObject.finishedRecurring.sort(goalFinishSort);
             goalsObject.finishedOneTime.sort(goalFinishSort);
             goalsObject.major.sort(goalFinishSort);
-            
-            next();
         }
     }
+            
+    next();
 });
 
 // Create an index on username

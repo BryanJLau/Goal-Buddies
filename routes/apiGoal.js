@@ -220,104 +220,92 @@ router.post('/:id/finish', middle.verifyToken, function (req, res, next) {
  * Returns:
  *      statusCode : No Content (204) if successful, Unauthorized (401) on failure
  */
-router.post('/:id/motivate', middle.verifyToken, function (req, res, next) {
-    res.status(HttpStatus.NOT_IMPLEMENTED);
-    return res.send("Functionality under development");
-    
-    //return res.send("Function not implemented yet.");
-    /*
-     * The general flow of the function is as follows:
-     * 1. Find the goal
-     * 2. Find and update the user that owns the goal
-     * 3. Update the goal (increment and mark as unread)
-     * 4. Rollback if necessary
-     */
-    
-    GoalModel.findById(req.params.id, findingGoal);
-    var goal = null;
-    var user = null;
-    var oldDate = null;
-    var oldMotivators = [];
-    var version = -1;
-    
-    // 1. Find the goal
-    function findingGoal(err, foundGoal) {
-        if (err) {
-            errorHandler.logError(err, res);
-        }
-        else if (!foundGoal) {
-            errorHandler.goalNotFound(res);
-        }
-        else {
-            goal = foundGoal;
-            UserModel.findById(foundGoal.userId, findingUser);
-        }
-    }
-    
-    // 2. Find and update the user that owns the goal
-    function findingUser(err, foundUser) {
+router.post('/:username/:id/motivate', middle.verifyToken, function (req, res, next) {    
+    UserModel.findOne({username: req.user.username},
+                      'relationships statistics premium',
+                      function(err, you) {
         if(err) {
             errorHandler.logError(err, res);
-        } else if (!foundUser) {
-            errorHandler.targetUserNotFound(res);
-        } else if (foundUser.friends.indexOf(req.user._id) == -1) {
-            errorHandler.targetUserNotFriend(res);
+        } else if (!you) {
+            errorHandler.userNotFound(res);
+        } else if(you.relationships.friends.indexOf(req.params.username) > -1) {
+            UserModel.findOne({username: req.params.username},
+                              'goals motivation statistics notifications',
+                              function(err, them) {
+                if(err) {
+                    return errorHandler.logError(err, res);
+                } else if (!them) {
+                    return errorHandler.targetUserNotFound(res);
+                } else {
+                    if(you.relationships.friends.indexOf(req.params.username) > -1) {
+                        foundUsers(you, them);
+                    } else {
+                        return errorHandler.targetUserNotFriend(res);
+                    }
+                }
+            });
         } else {
-            user = foundUser;
+            console.log(you.relationships);
+            return errorHandler.targetUserNotFriend(res);
+        }
+    });
+    
+    function foundUsers(you, them) {
+        var id = req.params.id;
+        var goal = them.goals.pendingRecurring.id(id) ||
+                   them.goals.pendingOneTime.id(id);
+        goal.times++;
+        
+        var d = new Date();
+        var today = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime();
+        
+        var notification = {
+            notification: req.user.username + " just motivated you! Go work at " +
+                "your goal: " + goal.description,
+            date: new Date()
+        };
+        them.notifications.push(notification);
+        
+        if(them.motivation.lastMotivated != today) {
+            // Clear the motivators
+            them.motivation.motivators = {};
+        } else {
+            /*
+             * Tier limitations table
+             * +======+======================+
+             * | Tier | Motivations/user/day |
+             * +======+======================+
+             * |   -1 |                    5 |
+             * +======+======================+
+             * |    0 |                    1 |
+             * +======+======================+
+             * |    1 |                    2 |
+             * +======+======================+
+             * |    5 |                    5 |
+             * +======+======================+
+             */
             
-            // Check if already motivated today
-            var today = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime();
-            if (user.lastMotivated == today && user.motivators.indexOf(req.user.username) > -1) {
-                errorHandler.alreadyMotivatedToday(res);
+            var motivationLimit = (you.premium.tier == -1 || you.premium.tier == 5) ?
+                5 : you.premium.tier + 1;
+            
+            if(them.motivation.motivators[req.user.username] > motivationLimit)
+                return errorHandler.alreadyMotivatedToday(res);
+        }
+        
+        them.motivation.lastMotivator = req.user.username;
+        them.statistics.motivationsReceived++;
+        
+        them.save(function(err) {
+            if(err) {
+                return errorHandler.logError(err, res);
             } else {
-                // Copy in case of rollback
-                for(var i = 0; i < user.motivators; i++) {
-                    oldMotivators.push(user.motivators[i]);
-                }
-                oldDate = user.lastMotivated;
+                you.statistics.motivationsGiven++;
+                you.save();
                 
-                if(user.lastMotivated < today) {
-                    // It's a new day! Clear everyone out
-                    user.motivators.length = 0;
-                }
-                
-                user.timesMotivated++;
-                user.version++;
-                user.lastMotivated = today;
-                user.motivators.push(req.user.username);
-                
-                foundUser.save(savingUser);
+                res.status(HttpStatus.NO_CONTENT);
+                return res.send('');
             }
-        }
-    }
-    
-    // 3. Update the goal (increment and mark as unread)
-    function savingUser(err) {
-        if(err) {
-            errorHandler.logError(err, res);
-        } else {
-            goal.version = version;
-            goal.times++;
-            goal.unread = true;
-            goal.save(savingGoal);
-        }
-    }
-    
-    // 4. Rollback if necessary
-    function savingGoal(err) {
-        if(err) {
-            errorHandler(err, res);
-            
-            user.timesMotivated--;
-            user.lastMotivated = oldDate;
-            user.motivators = oldMotivators;
-            
-            user.save();
-        } else {
-            // Save successful
-            res.status(HttpStatus.NO_CONTENT);
-            return res.send('');
-        }
+        })
     }
 });
 

@@ -296,7 +296,7 @@ Returns:
 
 Motivate a goal
 -------------
-``` POST /goals/:id/motivate ```
+``` POST /goals/username/:id/motivate ```
 
 Parameters:
 
