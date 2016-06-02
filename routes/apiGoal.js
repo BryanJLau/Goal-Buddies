@@ -14,7 +14,6 @@ var GoalModel = require('../models/goalModel');
 router.get('/list/:username?', middle.verifyToken, middle.cleanBody, function (req, res, next) {
     var username = req.params.username || req.user.username;
     UserModel.findOne({username: username}, 'relationships goals', function(err, user) {
-        console.log(user);
         if(err) {
             errorHandler.logError(err, res);
         } else if(!user ||

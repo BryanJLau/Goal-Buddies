@@ -106,9 +106,23 @@ var goalListApp = angular.module('goalListApp', []);
 
 goalListApp.controller('GoalListCtrl', function ($scope, $http, $timeout) {
     var d = new Date();
+    // Pass the token in requests
     var postData = {
         token: sessionStorage.getItem("token")
     }
+    var getConfig = {
+        headers: {
+            'Content-type': 'application/json',
+            'x-access-token': sessionStorage.getItem("token")
+        },
+        params: {}
+    };
+    
+    $scope.goals = [];
+    $scope.goalContainer = {};
+    $scope.visibility = {
+        myGoals: true
+    };
 
     // Get today's date's 12 AM to compare with goal dates
     $scope.now = new Date(d.getFullYear(), d.getMonth(), d.getDate(),
@@ -123,8 +137,26 @@ goalListApp.controller('GoalListCtrl', function ($scope, $http, $timeout) {
             searchQuery: ""
         };
         $scope.addForm = {};
+    
+        $scope.social = {
+            searchQuery : ""
+        };
 
         $scope.updateList();
+    }
+    
+    $scope.usernameSearch = function() {
+        if($scope.social.searchQuery) {
+            $http.get('/api/users/search/' + $scope.social.searchQuery, getConfig)
+                .success(function (response) {
+                    console.log(response);
+                })
+                .error(function (error) {
+                    console.log(error);
+                    $('#errorModal').modal('show');
+                    $('#listLoaderGif').addClass('hidden');
+                });
+        }
     }
 
     // Have to delay the update, or else modal persists
@@ -150,66 +182,47 @@ goalListApp.controller('GoalListCtrl', function ($scope, $http, $timeout) {
 
     // When the nav is changed
     $scope.changeTypes = function (type, pending) {
-        if (pending)
-            $scope.goalTypeString = "";
-        else
-            $scope.goalTypeString = "Finished ";
-
-        if (type == 0)
-            $scope.goalTypeString += "Recurring";
-        else
-            $scope.goalTypeString += "One-Time";
-
-        $scope.list.pending = pending;
-        $scope.list.type = type;
-
-        $scope.updateList();
+        if(pending && !type) {
+            $scope.goalTypeString = "Recurring ";
+            $scope.goals = $scope.goalContainer.pendingRecurring;
+        } else if (pending && type) {
+            $scope.goalTypeString = "One-Time ";
+            $scope.goals = $scope.goalContainer.pendingOneTime;
+        } else if(!pending && !type) {
+            $scope.goalTypeString = "Finished Recurring ";
+            $scope.goals = $scope.goalContainer.finishedRecurring;
+        } else if (!pending && type) {
+            $scope.goalTypeString = "Finished One-Time ";
+            $scope.goals = $scope.goalContainer.finishedOneTime;
+        }
     }
 
     $scope.updateList = function () {
-        // Set the token in the get request
-        var getConfig = {
-            headers: {
-                'Content-type': 'application/json',
-                'x-access-token': sessionStorage.getItem("token")
-            },
-            params: {}
-        };
-
-        // Initial setup
-        console.log($scope.list);
-        getConfig.params.pending = $scope.list.pending;
-        getConfig.params.type = $scope.list.type;
-        getConfig.params.q = $scope.list.searchQuery;
-
         $('#listLoaderGif').removeClass('hidden');
 
-        // Actually send POST request
-        if (sessionStorage.getItem("token")) {
-            $http.get('/api/goals/list', getConfig)
-                .success(function (response) {
-                    $scope.goals = response.goals;
-                    $scope.totalGoals = response.totalGoals;
-                    for (var i = 0; i < $scope.goals.length; i++) {
-                        // Date manipulation for prettier printing
-                        $scope.goals[i].createdDate =
-                            new Date($scope.goals[i].created).toDateString();
-                        $scope.goals[i].etaMs =
-                            new Date($scope.goals[i].eta).getTime();
-                        $scope.goals[i].finishedMs =
-                            new Date($scope.goals[i].finished).getTime();
-                        $scope.goals[i].etaDate =
-                            new Date($scope.goals[i].eta).toDateString();
-                        $scope.goals[i].finishedDate =
-                            new Date($scope.goals[i].finished).toDateString();
-                    }
-                    $('#listLoaderGif').addClass('hidden');
-                })
-                .error(function (error) {
-                    $('#errorModal').modal('show');
-                    $('#listLoaderGif').addClass('hidden');
-                });
-        }
+        $http.get('/api/goals/list', getConfig)
+            .success(function (response) {
+                $scope.goalContainer = response;
+                
+                for (var i = 0; i < $scope.goals.length; i++) {
+                    // Date manipulation for prettier printing
+                    $scope.goals[i].createdDate =
+                        new Date($scope.goals[i].created).toDateString();
+                    $scope.goals[i].etaMs =
+                        new Date($scope.goals[i].eta).getTime();
+                    $scope.goals[i].finishedMs =
+                        new Date($scope.goals[i].finished).getTime();
+                    $scope.goals[i].etaDate =
+                        new Date($scope.goals[i].eta).toDateString();
+                    $scope.goals[i].finishedDate =
+                        new Date($scope.goals[i].finished).toDateString();
+                }
+                $('#listLoaderGif').addClass('hidden');
+            })
+            .error(function (error) {
+                $('#errorModal').modal('show');
+                $('#listLoaderGif').addClass('hidden');
+            });
     };
 
     $scope.addGoal = function () {
@@ -290,4 +303,9 @@ goalListApp.controller('GoalListCtrl', function ($scope, $http, $timeout) {
             });
         }, 1000);
     }
-});
+})
+.directive('myGoals', function() {
+    return {
+        templateUrl: '/templates/myGoalSection.html'
+    };
+})

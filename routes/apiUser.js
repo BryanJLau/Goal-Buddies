@@ -215,7 +215,7 @@ router.get('/search/:username?', middle.verifyToken, function (req, res, next) {
             errorHandler.logError(err, res);
         } else {
             if(!user || user.relationships.blocking.indexOf(req.user.username) > -1) {
-                errorHandler.userNotFound(res);
+                return errorHandler.targetUserNotFound(res);
             } else {
                 if(!req.params.username || req.params.username == req.user.username) {
                     // Want yourself, return everything!

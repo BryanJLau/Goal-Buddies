@@ -98,16 +98,8 @@
                 <div class="col-md-10">
                     <!-- Navigation -->
 					<div class="col-md-3">
-                        <div class="input-group">
-                            <input type="text" class="form-control" ng-model="list.searchQuery"
-                                placeholder="Goal search">
-                            <span class="input-group-btn">
-                                <button class="btn btn-default" type="button" ng-click="updateList()">
-                                    <span class="glyphicon glyphicon-search" />
-                                </button>
-                            </span>
-                        </div>
-
+                        <h1>Goals</h1>
+                        <hr>
                         <button class="btn btn-success btn-block" data-toggle="modal" data-target="#addGoalModal">
                             <span class="glyphicon glyphicon-plus"></span> Add a goal!
                         </button>
@@ -137,114 +129,24 @@
 								</li>
 							</ul>
 						</nav>
+                        
+                        <h1>Social</h1>
+                        <hr>
+                        <div class="input-group">
+                            <input type="text" class="form-control" ng-model="social.searchQuery"
+                                placeholder="Username search">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="button" ng-click="usernameSearch()">
+                                    <span class="glyphicon glyphicon-search" />
+                                </button>
+                            </span>
+                        </div>
+
 					</div>
 
 					<div class="col-md-9">
-                        <div class="panel panel-default">
-                            <div class="panel-heading" >
-                                <img align="right" id="listLoaderGif" src="/images/ajax-loader.gif" class="hidden vcenter"/>
-						        <h4>{{ goalTypeString }} Goals</h4>
-                            </div>
-                            <div class="panel-body">
-                                <!-- Show this when no goals are found of this type -->
-                                <div ng-show="!goals.length">
-                                    <h1>
-                                        No goals found! Create one now and start on it!
-                                    </h1>
-                                </div>
-
-						        <div ng-repeat="goal in goals">
-
-                                    <!-- Modal for goal deletion -->
-                                    <div class="modal fade" id="md{{ goal._id }}">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                        <span aria-hidden="true">&times;</span>
-                                                    </button>
-                                                    <h4 class="modal-title">Delete Goal Confirmation</h4>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <p>Do you really want to delete this goal?</p>
-                                                    <p>{{ goal.description }}</p>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-default"
-                                                        data-dismiss="modal">Cancel</button>
-                                                    <button type="button" class="btn btn-danger"
-                                                        ng-click="deleteGoal(goal._id)">Delete</button>
-                                                </div>
-                                            </div><!-- /.modal-content -->
-                                        </div><!-- /.modal-dialog -->
-                                    </div><!-- /.modal -->
-
-                                    <!-- Modal for goal edit -->
-                                    <div class="modal fade" id="me{{ goal._id }}">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                        <span aria-hidden="true">&times;</span>
-                                                    </button>
-                                                    <h4 class="modal-title">Edit Goal Description</h4>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="form-group has-feedback">
-                                                        <label for="ebody">New Goal Description:</label>
-                                                        <textarea class="form-control" rows="5" id="edescription"
-                                                            placeholder="Eg. Lose 10 pounds" ng-model="editDescription"></textarea>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-default"
-                                                        data-dismiss="modal">Cancel</button>
-                                                    <button type="button" class="btn btn-info"
-                                                        ng-click="editGoal(goal._id, editDescription)">Edit</button>
-                                                </div>
-                                            </div><!-- /.modal-content -->
-                                        </div><!-- /.modal-dialog -->
-                                    </div><!-- /.modal -->
-
-							        <div class="panel panel-default" ng-class="panelClass(goal)">
-								        <div class="panel-heading" role="tab" id="h{{ goal._id }}">
-									        <div class="panel-title">
-										        <a class="collapsed" data-toggle="collapse"
-											        data-parent="#accordion" href="#{{ goal._id }}"
-											        aria-expanded="true" aria-controls="{{ goal._id }}">
-											        <span class="glyphicon glyphicon-{{ goal.icon }}"></span> 
-                                                    {{ goal.description }}
-										        </a>
-										        <button class="btn btn-success btn-xs pull-right"
-											        ng-if="goal.pending == true && goal.finished < now" 
-                                                    ng-click="finishGoal(goal._id)">Finish</button>
-									        </div>
-								        </div>
-								        <div id="{{ goal._id }}" class="panel-collapse collapse"
-									         role="tabpanel" aria-labelledby={{ goal._id }}>
-									        <div class="panel-body">
-										        Goal: {{ goal.description }}<br>
-										        Created: {{ goal.createdDate }}<br>
-										        <div ng-if="goal.finished != null">
-											        Last Finish Date: {{ goal.finishedDate }}<br>
-										        </div>
-										        Expiration Date: {{ goal.etaDate }}<br>
-                                                <span ng-if="goal.type == 0">Times Completed:</span>
-                                                <span ng-if="goal.type == 1">Times Motivated:</span>
-                                                 {{ goal.times }}<br>
-                                                <button type="button" class="btn btn-info" 
-                                                    data-toggle="modal" data-target="#me{{ goal._id }}"
-                                                    ng-if="goal.pending == true">Edit</button>
-                                                <button type="button" class="btn btn-danger"
-                                                    data-toggle="modal" data-target="#md{{ goal._id }}"
-                                                    ng-if="goal.pending == true">Delete</button>
-									        </div>
-								        </div>
-							        </div>
-						        </div>
-                            </div>
-                        </div>
-					</div>
+                        <my-goals ng-show="visibility.myGoals"></my-goals>
+                    </div>
 
                 </div>
                 <div class="col-md-1"></div>
