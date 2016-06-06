@@ -40,7 +40,7 @@ var GoalSchema = new mongoose.Schema({
         lastDate: {
             type : Date,
             default : null
-        },
+        }
     },
     
     times: {

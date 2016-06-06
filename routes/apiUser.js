@@ -209,7 +209,7 @@ router.get('/search/:username?', middle.verifyToken, function (req, res, next) {
     }
     
     UserModel.findOne(userMatchObject,
-                      'personal statistics relationships motivation',
+                      'username personal statistics relationships motivation',
                       function(err, user) {
         if(err) {
             errorHandler.logError(err, res);

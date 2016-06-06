@@ -247,7 +247,14 @@ Returns:
 
 * ``` statusCode ``` : OK (200) if successful, Unauthorized (401)
 or Not Found (404) on failure
-* ``` goals ``` : An array (NOT AN OBJECT) 
+* ``` pendingRecurring ``` : An array of goals
+* ``` pendingOneTime ``` : An array of goals
+* ``` major ``` : An array of goals
+
+The following are also included if no username is provided
+
+* ``` finishedRecurring ``` : An array of goals
+* ``` finishedOneTime ``` : An array of goals
 
 Add a goal
 -------------
